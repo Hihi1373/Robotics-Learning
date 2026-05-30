@@ -965,17 +965,49 @@ const lbNameInput=document.getElementById('lb-name-input');
 const lbSaveBtn  =document.getElementById('lb-save-btn');
 lbNameInput.addEventListener('input',()=>{ lbSaveBtn.disabled=!pendingScore||!lbNameInput.value.trim(); });
 lbSaveBtn.addEventListener('click',()=>{
-  if(!pendingScore||!lbNameInput.value.trim()) return;
-  const entry={name:lbNameInput.value.trim(),levelKey:pendingScore.levelKey,levelName:pendingScore.levelName,challengeName:pendingScore.challengeName,timeLeft:pendingScore.timeLeft,sensors:pendingScore.sensors,date:new Date().toISOString()};
-  lbAddEntry(entry); pendingScore=null; lbSaveBtn.disabled=true; lbNameInput.value='';
+  const name = lbNameInput.value.trim();
+
+  // Secret clear command
+  if(name === 'CLEAR'){
+    if(confirm('Clear ALL leaderboard scores?')){
+      lbClearAll();
+      lbRender();
+      lbNameInput.value='';
+    }
+    return;
+  }
+
+  if(!pendingScore || !name) return;
+
+  const entry={
+    name:name,
+    levelKey:pendingScore.levelKey,
+    levelName:pendingScore.levelName,
+    challengeName:pendingScore.challengeName,
+    timeLeft:pendingScore.timeLeft,
+    sensors:pendingScore.sensors,
+    date:new Date().toISOString()
+  };
+
+  lbAddEntry(entry);
+  pendingScore=null;
+  lbSaveBtn.disabled=true;
+  lbNameInput.value='';
+
   lbNameInput.placeholder='✓ Score saved!';
+
   const targetTab=document.querySelector(`.lb-tab[data-level="${entry.levelKey}"]`);
-  if(targetTab){document.querySelectorAll('.lb-tab').forEach(t=>t.classList.remove('active'));targetTab.classList.add('active');lbActiveTab=entry.levelKey;}
+  if(targetTab){
+    document.querySelectorAll('.lb-tab').forEach(t=>t.classList.remove('active'));
+    targetTab.classList.add('active');
+    lbActiveTab=entry.levelKey;
+  }
+
   lbRender();
-  setTimeout(()=>{lbNameInput.placeholder='Enter your name to save score…';},2500);
-});
-document.getElementById('lb-clear-btn').addEventListener('click',()=>{
-  if(confirm('Clear ALL leaderboard scores? This cannot be undone.')){lbClearAll();lbRender();}
+
+  setTimeout(()=>{
+    lbNameInput.placeholder='Enter your name to save score…';
+  },2500);
 });
 
 // ═══════════════════════════════════════════════════
