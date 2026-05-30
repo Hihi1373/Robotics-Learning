@@ -1,0 +1,1884 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Capstone Project</title>
+<style>
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+:root {
+  --bg:#f7f7fb; --surface:#fff; --surface2:#f0f4f8;
+  --border:#d0d0d8; --border2:#b8c4d4;
+  --text:#334155; --bright:#1a1a2e; --dim:#64748b;
+  --blue:#0b5ed7; --amber:#d97706; --purple:#9333ea;
+  --red:#dc2626; --green:#16a34a; --orange:#ea580c;
+}
+body { font-family:'Segoe UI',sans-serif; background:var(--bg); color:var(--text); height:100vh; display:flex; flex-direction:column; overflow:hidden; }
+
+/* ── HEADER ── */
+header { display:flex; align-items:center; justify-content:space-between; padding:9px 20px; border-bottom:1px solid var(--border); background:var(--surface); flex-shrink:0; gap:12px; box-shadow:0 1px 4px rgba(0,0,0,.05); }
+.header-left { display:flex; align-items:center; gap:10px; }
+.header-title { font-size:14px; font-weight:700; color:var(--bright); }
+.hbadge { font-size:11px; padding:3px 9px; border-radius:20px; font-weight:600; background:#fef3c7; color:#92400e; }
+.mode-pills { display:flex; border:1px solid var(--border2); border-radius:8px; overflow:hidden; }
+.mode-pill { padding:6px 16px; font-size:13px; font-weight:600; cursor:pointer; border:none; background:transparent; color:var(--dim); transition:all .18s; }
+.mode-pill.active { background:var(--blue); color:#fff; }
+.mode-pill:not(.active):hover { background:var(--surface2); color:var(--text); }
+#challenge-status { font-size:13px; font-weight:600; padding:5px 12px; border-radius:8px; border:1px solid var(--border); background:var(--surface2); color:var(--dim); display:none; gap:8px; align-items:center; }
+#challenge-status.active { display:flex; }
+#timer-display { font-family:'Courier New',monospace; font-size:15px; font-weight:700; color:var(--blue); min-width:32px; text-align:center; }
+#timer-display.urgent { color:var(--red); animation:pulse .5s infinite alternate; }
+@keyframes pulse { from{opacity:1} to{opacity:.3} }
+
+/* ── INSTR BAR ── */
+.instr-bar { padding:6px 20px; border-bottom:1px solid var(--border); font-size:12px; font-family:'Courier New',monospace; color:var(--dim); display:flex; align-items:center; gap:8px; flex-shrink:0; background:var(--surface); }
+.live-dot { width:6px; height:6px; border-radius:50%; background:var(--green); animation:blink 2s infinite; flex-shrink:0; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+/* ── SCREENS ── */
+#design-screen, #sim-screen { flex:1; display:none; overflow:hidden; }
+#design-screen.active { display:grid; grid-template-columns:1fr 320px; }
+#sim-screen.active {
+  display:grid;
+  grid-template-columns: 1fr 300px;
+  grid-template-rows: 1fr 400px;
+}
+
+/* ── DESIGN PREVIEW ── */
+.preview-area { display:flex; align-items:center; justify-content:center; border-right:1px solid var(--border); position:relative; background:repeating-linear-gradient(0deg,transparent,transparent 39px,var(--border) 39px,var(--border) 40px),repeating-linear-gradient(90deg,transparent,transparent 39px,var(--border) 39px,var(--border) 40px); background-color:#eef2ff; }
+.preview-label { position:absolute; top:14px; left:18px; font-family:'Courier New',monospace; font-size:10px; color:var(--dim); letter-spacing:1px; }
+.preview-label strong { color:var(--blue); }
+#design-robot-wrap { position:relative; width:130px; height:130px; }
+#design-robot-body { width:100%; height:100%; background:linear-gradient(145deg,#dde6f5,#c8d4e8); border:2px solid #94a3b8; border-radius:12px; position:relative; box-shadow:0 4px 16px rgba(0,0,0,.10),inset 0 1px 0 rgba(255,255,255,.6); overflow:visible; cursor:crosshair; }
+#design-robot-body::before { content:''; position:absolute; top:0; left:14px; right:14px; height:5px; background:var(--blue); border-radius:0 0 4px 4px; }
+#design-robot-body::after { content:'FRONT ↑'; position:absolute; top:-22px; left:50%; transform:translateX(-50%); font-family:'Courier New',monospace; font-size:9px; color:var(--blue); letter-spacing:2px; opacity:.7; }
+.dwheel { position:absolute; width:12px; height:28px; background:#64748b; border:1px solid #94a3b8; border-radius:3px; }
+.dwheel.tl{top:14px;left:-14px} .dwheel.bl{bottom:14px;left:-14px} .dwheel.tr{top:14px;right:-14px} .dwheel.br{bottom:14px;right:-14px}
+
+/* ── DESIGN SIDEBAR ── */
+.sensor-sidebar { background:var(--surface); border-left:1px solid var(--border); padding:16px 14px; display:flex; flex-direction:column; gap:10px; overflow-y:auto; }
+.sidebar-heading { font-size:10px; font-weight:700; letter-spacing:2px; color:var(--dim); text-transform:uppercase; }
+#budget-bar-wrap { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:10px 12px; }
+.bb-label { font-size:11px; color:var(--dim); margin-bottom:6px; display:flex; justify-content:space-between; }
+.bb-label strong { color:var(--bright); }
+#budget-track { height:8px; background:#e2e8f0; border-radius:4px; overflow:hidden; }
+#budget-fill { height:100%; border-radius:4px; background:var(--green); transition:width .2s,background .2s; }
+#slots-info { font-size:11px; color:var(--dim); margin-top:5px; }
+.sensor-card { border-radius:10px; padding:10px 12px; cursor:grab; user-select:none; border:1px solid transparent; transition:transform .15s,box-shadow .15s; position:relative; }
+.sensor-card:hover { transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,.08); }
+.sensor-card.motion    { background:#fff9e6; border-color:#ffd166; }
+.sensor-card.proximity { background:#e8fafe; border-color:#6dd5ed; }
+.sensor-card.vision    { background:#faf0fb; border-color:#d063e6; }
+.sensor-card.disabled  { opacity:.4; cursor:not-allowed; pointer-events:none; }
+.sensor-card .s-icon   { font-size:16px; margin-bottom:3px; display:block; }
+.sensor-card .s-name   { font-weight:600; font-size:13px; margin-bottom:2px; }
+.sensor-card.motion    .s-name { color:#9a5c00; }
+.sensor-card.proximity .s-name { color:#0a6a88; }
+.sensor-card.vision    .s-name { color:#7a00a0; }
+.sensor-card .s-desc   { font-size:11px; color:var(--dim); line-height:1.4; }
+.s-cost { position:absolute; top:8px; right:10px; font-size:10px; font-weight:700; padding:2px 7px; border-radius:20px; }
+.motion    .s-cost { background:#fde68a; color:#92400e; }
+.proximity .s-cost { background:#bae6fd; color:#075985; }
+.vision    .s-cost { background:#e9d5ff; color:#6b21a8; }
+.count-badge { background:var(--surface2); border:1px solid var(--border); border-radius:6px; padding:7px 11px; font-family:'Courier New',monospace; font-size:11px; color:var(--dim); }
+.count-badge strong { color:var(--bright); }
+#puzzle-info-card { border-radius:10px; padding:12px; border:1px solid #93c5fd; background:#eff6ff; font-size:12px; line-height:1.55; }
+#puzzle-info-card h4 { font-size:12px; font-weight:700; color:#1d4ed8; margin-bottom:6px; }
+.pi-constraint { margin-top:7px; padding:6px 8px; background:#dbeafe; border-radius:6px; font-size:11px; color:#1e40af; }
+#puzzle-info-card.hidden { display:none; }
+#puzzle-select-wrap { border-top:1px solid var(--border); padding-top:10px; }
+#puzzle-select-wrap label { font-size:11px; font-weight:700; color:var(--dim); display:block; margin-bottom:5px; text-transform:uppercase; letter-spacing:1px; }
+#puzzle-select { width:100%; padding:7px 10px; border:1px solid var(--border2); border-radius:7px; font-size:12px; background:var(--surface); color:var(--bright); cursor:pointer; }
+.sidebar-btns { display:flex; gap:8px; margin-top:auto; }
+
+/* ── BUTTONS ── */
+.btn { padding:8px 14px; border-radius:8px; border:none; font-family:'Segoe UI',sans-serif; font-size:13px; font-weight:600; cursor:pointer; transition:all .15s; }
+.btn-primary  { background:var(--blue);   color:#fff; flex:1; }
+.btn-primary:hover  { filter:brightness(1.1); }
+.btn-challenge { background:var(--orange); color:#fff; width:100%; }
+.btn-challenge:hover{ filter:brightness(1.08); }
+.btn-danger   { background:rgba(220,38,38,.08); color:var(--red); border:1px solid rgba(220,38,38,.2); }
+.btn-danger:hover  { background:rgba(220,38,38,.15); }
+.btn-ghost    { background:var(--surface2); color:var(--text); border:1px solid var(--border); }
+.btn-ghost:hover   { background:var(--border); }
+.btn-sm       { padding:5px 10px; font-size:12px; }
+.btn-run      { background:#16a34a; color:#fff; }
+.btn-run:hover{ filter:brightness(1.1); }
+.btn-run.running { background:#dc2626; }
+.btn-step     { background:#6366f1; color:#fff; }
+.btn-step:hover{ filter:brightness(1.1); }
+
+/* ── PLACED DOTS ── */
+.placed-dot { position:absolute; width:13px; height:13px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:8px; z-index:10; border:2px solid rgba(255,255,255,.6); transform:translate(-50%,-50%); pointer-events:none; box-shadow:0 1px 4px rgba(0,0,0,.2); }
+.placed-dot.motion    { background:#ffb700; }
+.placed-dot.proximity { background:#219ebc; }
+.placed-dot.vision    { background:#9333ea; }
+.drag-ghost { position:fixed; pointer-events:none; z-index:9999; opacity:.85; border-radius:10px; }
+
+/* ── SIM LAYOUT ── */
+.sim-canvas-area { grid-column:1; grid-row:1; display:flex; align-items:center; justify-content:center; position:relative; background:#eef2ff; border-right:1px solid var(--border); overflow:hidden; border-bottom:1px solid var(--border); }
+.readings-panel  { grid-column:2; grid-row:1 / 3; background:var(--surface); padding:14px 13px; display:flex; flex-direction:column; gap:10px; overflow-y:auto; border-left:1px solid var(--border); }
+#sim-canvas { border:1px solid var(--border2); border-radius:6px; display:block; box-shadow:0 2px 12px rgba(0,0,0,.08); }
+.key-hints { position:absolute; bottom:10px; left:50%; transform:translateX(-50%); display:flex; align-items:center; gap:5px; font-family:'Courier New',monospace; font-size:11px; color:var(--dim); white-space:nowrap; }
+.key { padding:2px 7px; background:var(--surface); border:1px solid var(--border); border-radius:4px; font-size:11px; }
+
+/* ── READINGS ── */
+.panel-heading { font-family:'Courier New',monospace; font-size:11px; letter-spacing:1px; color:var(--dim); padding-bottom:8px; border-bottom:1px solid var(--border); }
+.reading-card { border-radius:8px; padding:10px 12px; border:1px solid transparent; }
+.reading-card.motion    { background:#fff9e6; border-color:#ffd166; }
+.reading-card.proximity { background:#e8fafe; border-color:#6dd5ed; }
+.reading-card.vision    { background:#faf0fb; border-color:#d063e6; }
+.reading-card.apriltag  { background:#fff7ed; border-color:#fb923c; }
+.reading-card.constraint{ background:#f0fdf4; border-color:#86efac; }
+.reading-card.constraint.active-c { background:#eff6ff; border-color:#93c5fd; }
+.r-label { font-size:10px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:5px; }
+.reading-card.motion    .r-label { color:#9a5c00; }
+.reading-card.proximity .r-label { color:#0a6a88; }
+.reading-card.vision    .r-label { color:#7a00a0; }
+.reading-card.apriltag  .r-label { color:#c2410c; }
+.reading-card.constraint .r-label { color:#15803d; }
+.r-value { font-family:'Courier New',monospace; font-size:20px; font-weight:700; color:var(--bright); line-height:1; margin-bottom:2px; transition:color .3s; }
+.r-unit  { font-family:'Courier New',monospace; font-size:10px; color:var(--dim); }
+.r-sub   { font-family:'Courier New',monospace; font-size:11px; color:var(--dim); margin-top:4px; }
+.r-bar   { margin-top:6px; height:4px; background:rgba(0,0,0,.07); border-radius:2px; overflow:hidden; }
+.r-bar-fill { height:100%; border-radius:2px; transition:width .12s,background .3s; }
+.reading-card.proximity .r-bar-fill { background:#219ebc; }
+.reading-card.motion    .r-bar-fill { background:#ffb700; }
+.reading-card.vision    .r-bar-fill { background:#9333ea; }
+.reading-card.apriltag  .r-bar-fill { background:#f97316; }
+.no-sensor-msg { background:var(--surface2); border:1px dashed var(--border); border-radius:8px; padding:14px; text-align:center; font-size:12px; color:var(--dim); line-height:1.6; }
+.sim-side-btns { margin-top:auto; display:flex; flex-direction:column; gap:7px; }
+
+/* ── CANVAS OVERLAY ── */
+#canvas-overlay { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(255,255,255,.96); border:2px solid var(--border2); border-radius:14px; padding:22px 28px; text-align:center; box-shadow:0 8px 32px rgba(0,0,0,.12); display:none; pointer-events:none; z-index:10; max-width:300px; }
+#canvas-overlay.show { display:block; }
+#overlay-title { font-size:20px; font-weight:700; margin-bottom:6px; }
+#overlay-body  { font-size:12px; color:var(--dim); line-height:1.55; }
+
+/* ══════════════════════════════════════════════
+   CODE PANEL
+══════════════════════════════════════════════ */
+#code-panel {
+  grid-column:1; grid-row:2;
+  display:flex; flex-direction:column;
+  background:#1e293b;
+  border-top:2px solid #334155;
+  overflow:hidden;
+  user-select:none;
+}
+#code-tabs {
+  display:flex; align-items:center; gap:0;
+  background:#0f172a;
+  border-bottom:1px solid #334155;
+  padding:0 12px;
+  flex-shrink:0;
+}
+.code-tab {
+  padding:6px 14px; font-size:11px; font-weight:700; letter-spacing:1px;
+  color:#64748b; cursor:pointer; border-bottom:2px solid transparent;
+  text-transform:uppercase; transition:all .15s;
+}
+.code-tab.active { color:#e2e8f0; border-bottom-color:#6366f1; }
+.code-tab:hover:not(.active) { color:#94a3b8; }
+.code-tab-spacer { flex:1; }
+#prog-status {
+  font-family:'Courier New',monospace; font-size:11px; color:#94a3b8;
+  padding:0 8px;
+}
+#prog-status.running { color:#4ade80; }
+#code-body {
+  display:flex; flex:1; overflow:hidden;
+}
+#block-palette {
+  display:flex; flex-direction:column; gap:5px;
+  padding:8px 10px;
+  border-right:1px solid #334155;
+  background:#0f172a;
+  flex-shrink:0;
+  width:100px;
+  justify-content:center;
+}
+#block-palette .pal-label {
+  font-size:9px; font-weight:700; letter-spacing:1px; color:#475569;
+  text-transform:uppercase; margin-bottom:2px; text-align:center;
+}
+#sequence-wrap {
+  flex:1; overflow-x:auto; overflow-y:hidden;
+  padding:10px 12px;
+  display:flex; align-items:center; gap:0;
+  position:relative;
+}
+#sequence-empty {
+  position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+  font-size:12px; color:#334155; pointer-events:none; text-align:center;
+  font-family:'Courier New',monospace; white-space:nowrap;
+}
+#sequence-list {
+  display:flex; gap:5px; align-items:center; min-height:110px;
+  padding:2px 4px;
+}
+#run-controls {
+  display:flex; flex-direction:column; gap:5px;
+  padding:8px 10px;
+  border-left:1px solid #334155;
+  background:#0f172a;
+  flex-shrink:0;
+  width:90px;
+  justify-content:center;
+}
+.prog-block {
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  border-radius:8px; cursor:grab; flex-shrink:0;
+  border:2px solid transparent;
+  transition:transform .1s, box-shadow .1s;
+  position:relative;
+  font-family:'Segoe UI',sans-serif;
+  box-shadow:0 3px 0 rgba(0,0,0,0.35);
+}
+.prog-block:hover { transform:translateY(-2px); box-shadow:0 5px 0 rgba(0,0,0,0.35); }
+.prog-block:active { transform:translateY(1px); box-shadow:0 1px 0 rgba(0,0,0,0.35); }
+.pal-block { width:76px; height:52px; font-size:18px; }
+.pal-block .pb-label { font-size:9px; font-weight:800; letter-spacing:0.5px; margin-top:2px; text-transform:uppercase; opacity:.9; }
+.seq-block { width:66px; height:100px; flex-shrink:0; justify-content:space-between; padding:8px 6px; }
+.seq-block .sb-icon  { font-size:22px; line-height:1; }
+.seq-block .sb-label { font-size:9px; font-weight:800; letter-spacing:0.5px; text-transform:uppercase; opacity:.85; }
+.seq-block .sb-param { display:flex; align-items:center; gap:2px; background:rgba(0,0,0,0.2); border-radius:5px; padding:3px 6px; width:100%; justify-content:center; }
+.seq-block .sb-num { font-family:'Courier New',monospace; font-size:14px; font-weight:700; background:transparent; border:none; color:inherit; width:30px; text-align:center; cursor:text; outline:none; }
+.seq-block .sb-unit { font-size:9px; opacity:.7; font-weight:600; }
+.seq-block .sb-del { position:absolute; top:3px; right:3px; width:14px; height:14px; border-radius:50%; background:rgba(0,0,0,0.3); color:rgba(255,255,255,0.7); font-size:9px; display:flex; align-items:center; justify-content:center; cursor:pointer; border:none; padding:0; transition:background .1s; }
+.seq-block .sb-del:hover { background:rgba(220,38,38,.7); color:#fff; }
+.seq-block.active-step { outline:3px solid #facc15; box-shadow:0 0 12px rgba(250,204,21,0.6), 0 3px 0 rgba(0,0,0,0.35); transform:translateY(-3px) scale(1.05); }
+.seq-insert-marker { width:4px; height:90px; background:#6366f1; border-radius:2px; flex-shrink:0; transition:opacity .1s; box-shadow:0 0 6px rgba(99,102,241,0.6); }
+.block-forward   { background:#16a34a; color:#fff; border-color:#15803d; }
+.block-backward  { background:#d97706; color:#fff; border-color:#b45309; }
+.block-turnleft  { background:#2563eb; color:#fff; border-color:#1d4ed8; }
+.block-turnright { background:#7c3aed; color:#fff; border-color:#6d28d9; }
+.block-wait      { background:#475569; color:#fff; border-color:#334155; }
+.block-repeat    { background:#db2777; color:#fff; border-color:#be185d; }
+.rc-btn { padding:0; height:32px; border-radius:7px; border:none; font-size:12px; font-weight:700; cursor:pointer; transition:all .15s; width:100%; font-family:'Segoe UI',sans-serif; }
+.rc-run  { background:#16a34a; color:#fff; }
+.rc-run:hover { filter:brightness(1.1); }
+.rc-run.running { background:#dc2626; }
+.rc-step { background:#4f46e5; color:#fff; }
+.rc-step:hover { filter:brightness(1.1); }
+.rc-step:disabled { opacity:.4; cursor:not-allowed; }
+.rc-clear{ background:#334155; color:#94a3b8; }
+.rc-clear:hover { background:#475569; color:#e2e8f0; }
+.code-drag-ghost { position:fixed; pointer-events:none; z-index:9999; opacity:0.82; transform:rotate(4deg) scale(0.95); }
+
+/* ══════════════════════════════════════════════
+   LEADERBOARD MODAL
+══════════════════════════════════════════════ */
+#lb-overlay {
+  position:fixed; inset:0; background:rgba(15,23,42,0.72);
+  z-index:1000; display:none; align-items:center; justify-content:center;
+  backdrop-filter:blur(4px);
+}
+#lb-overlay.show { display:flex; }
+#lb-modal {
+  background:var(--surface); border-radius:18px;
+  border:1px solid var(--border2);
+  box-shadow:0 24px 64px rgba(0,0,0,.22);
+  width:520px; max-width:96vw; max-height:88vh;
+  display:flex; flex-direction:column; overflow:hidden;
+  animation:lb-in .2s ease;
+}
+@keyframes lb-in { from{opacity:0;transform:scale(.94) translateY(12px)} to{opacity:1;transform:none} }
+#lb-header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:18px 22px 14px; border-bottom:1px solid var(--border);
+  background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%);
+}
+#lb-header h2 { font-size:17px; font-weight:800; color:#f8fafc; letter-spacing:.5px; }
+#lb-header .lb-subtitle { font-size:11px; color:#64748b; font-family:'Courier New',monospace; margin-top:2px; }
+#lb-close { background:rgba(255,255,255,.08); border:none; color:#94a3b8; border-radius:8px; width:30px; height:30px; cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center; transition:all .15s; }
+#lb-close:hover { background:rgba(220,38,38,.3); color:#fff; }
+#lb-tabs { display:flex; border-bottom:1px solid var(--border); background:var(--surface2); }
+.lb-tab { flex:1; padding:8px 4px; font-size:11px; font-weight:700; text-align:center; cursor:pointer; color:var(--dim); border:none; background:transparent; border-bottom:2px solid transparent; transition:all .15s; letter-spacing:.5px; text-transform:uppercase; }
+.lb-tab.active { color:var(--blue); border-bottom-color:var(--blue); background:var(--surface); }
+.lb-tab:hover:not(.active) { color:var(--text); background:var(--border); }
+#lb-body { flex:1; overflow-y:auto; padding:16px 18px; display:flex; flex-direction:column; gap:8px; }
+.lb-empty { text-align:center; padding:40px 20px; color:var(--dim); font-size:13px; line-height:1.7; }
+.lb-empty .lb-empty-icon { font-size:36px; display:block; margin-bottom:12px; opacity:.5; }
+.lb-row {
+  display:grid; grid-template-columns:32px 1fr auto auto;
+  align-items:center; gap:8px;
+  padding:10px 12px; border-radius:10px;
+  border:1px solid var(--border); background:var(--surface);
+  transition:background .15s;
+  animation:lb-row-in .25s ease both;
+}
+@keyframes lb-row-in { from{opacity:0;transform:translateX(-8px)} to{opacity:1;transform:none} }
+.lb-row:hover { background:var(--surface2); }
+.lb-row.gold   { border-color:#fbbf24; background:#fffbeb; }
+.lb-row.silver { border-color:#94a3b8; background:#f8fafc; }
+.lb-row.bronze { border-color:#d97706; background:#fff7ed; }
+.lb-rank { font-family:'Courier New',monospace; font-size:13px; font-weight:700; text-align:center; }
+.lb-row.gold   .lb-rank { color:#d97706; }
+.lb-row.silver .lb-rank { color:#64748b; }
+.lb-row.bronze .lb-rank { color:#92400e; }
+.lb-info { min-width:0; }
+.lb-name { font-weight:700; font-size:13px; color:var(--bright); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.lb-meta { font-size:10px; color:var(--dim); font-family:'Courier New',monospace; margin-top:2px; }
+.lb-score-col { text-align:right; }
+.lb-time { font-family:'Courier New',monospace; font-size:15px; font-weight:700; color:var(--blue); }
+.lb-time-label { font-size:9px; color:var(--dim); font-family:'Courier New',monospace; text-transform:uppercase; }
+.lb-sensors { display:flex; gap:3px; flex-wrap:wrap; justify-content:flex-end; }
+.lb-sensor-pip { font-size:10px; padding:1px 5px; border-radius:4px; font-weight:700; }
+.lb-sensor-pip.motion    { background:#fde68a; color:#92400e; }
+.lb-sensor-pip.proximity { background:#bae6fd; color:#075985; }
+.lb-sensor-pip.vision    { background:#e9d5ff; color:#6b21a8; }
+#lb-footer { padding:12px 18px; border-top:1px solid var(--border); display:flex; gap:8px; align-items:center; background:var(--surface2); }
+#lb-name-input { flex:1; padding:8px 12px; border:1px solid var(--border2); border-radius:8px; font-size:13px; font-family:'Segoe UI',sans-serif; color:var(--bright); background:var(--surface); outline:none; }
+#lb-name-input:focus { border-color:var(--blue); box-shadow:0 0 0 2px rgba(11,94,215,.15); }
+#lb-save-btn { padding:8px 16px; background:var(--blue); color:#fff; border:none; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap; transition:all .15s; }
+#lb-save-btn:hover { filter:brightness(1.1); }
+#lb-save-btn:disabled { opacity:.4; cursor:not-allowed; filter:none; }
+#lb-clear-btn { padding:8px 12px; background:rgba(220,38,38,.07); color:var(--red); border:1px solid rgba(220,38,38,.18); border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; transition:all .15s; }
+#lb-clear-btn:hover { background:rgba(220,38,38,.14); }
+#lb-open-btn {
+  width:100%; padding:8px 14px;
+  background:linear-gradient(135deg,#1e293b,#0f172a);
+  color:#f8fafc; border:none; border-radius:9px; font-size:13px;
+  font-weight:700; cursor:pointer; transition:all .15s;
+  display:flex; align-items:center; justify-content:center; gap:6px;
+  letter-spacing:.3px;
+}
+#lb-open-btn:hover { filter:brightness(1.2); transform:translateY(-1px); }
+.lb-pending-badge { display:inline-block; background:#16a34a; color:#fff; font-size:10px; padding:1px 7px; border-radius:20px; font-weight:700; margin-left:6px; animation:lb-badge-in .3s ease; }
+@keyframes lb-badge-in { from{opacity:0;transform:scale(.7)} to{opacity:1;transform:none} }
+
+/* ══════════════════════════════════════════════
+   INTERACTIVE TUTORIAL SPOTLIGHT SYSTEM
+══════════════════════════════════════════════ */
+
+/* Dark overlay with cutout hole — uses clip-path to punch a hole */
+#tut-curtain {
+  position: fixed;
+  inset: 0;
+  z-index: 1998;
+  pointer-events: none;
+  transition: opacity .3s;
+  opacity: 0;
+}
+#tut-curtain.show {
+  opacity: 1;
+  pointer-events: none; /* curtain itself never blocks clicks */
+}
+
+/* SVG underneath for the hole effect */
+#tut-curtain-svg {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 1998;
+  opacity: 0;
+  transition: opacity .3s;
+}
+#tut-curtain-svg.show { opacity: 1; }
+
+/* Tooltip card */
+#tut-tooltip {
+  position: fixed;
+  z-index: 2000;
+  width: 320px;
+  background: #fff;
+  border-radius: 16px;
+  border: 1.5px solid var(--border2);
+  box-shadow: 0 16px 48px rgba(0,0,0,.22), 0 0 0 1px rgba(11,94,215,.08);
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  animation: tut-pop .22s cubic-bezier(.22,1,.36,1);
+  pointer-events: all;
+}
+#tut-tooltip.show { display: flex; }
+@keyframes tut-pop {
+  from { opacity:0; transform:scale(.92) translateY(8px); }
+  to   { opacity:1; transform:none; }
+}
+
+/* Arrow pointer on the tooltip */
+#tut-tooltip::before {
+  content: '';
+  position: absolute;
+  width: 12px; height: 12px;
+  background: #fff;
+  border: 1.5px solid var(--border2);
+  border-right: none; border-bottom: none;
+  transform: rotate(45deg);
+  pointer-events: none;
+  transition: top .3s, left .3s, transform .3s;
+}
+#tut-tooltip[data-arrow="top"]::before    { top:-7px; left:28px; transform:rotate(45deg); }
+#tut-tooltip[data-arrow="bottom"]::before { bottom:-7px; left:28px; transform:rotate(225deg); border:1.5px solid var(--border2); border-right:none; border-bottom:none; }
+#tut-tooltip[data-arrow="left"]::before   { left:-7px; top:20px; transform:rotate(-45deg); }
+#tut-tooltip[data-arrow="right"]::before  { right:-7px; top:20px; transform:rotate(135deg); }
+#tut-tooltip[data-arrow="none"]::before   { display:none; }
+
+#tut-tt-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(135deg, #f8faff, #eff6ff);
+}
+#tut-tt-icon {
+  font-size: 22px;
+  width: 40px; height: 40px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+#tut-tt-meta { flex: 1; min-width: 0; }
+#tut-tt-step {
+  font-size: 10px; font-weight: 800; letter-spacing: 2px;
+  text-transform: uppercase; color: var(--blue); margin-bottom: 2px;
+}
+#tut-tt-title { font-size: 14px; font-weight: 800; color: var(--bright); line-height: 1.2; }
+
+#tut-tt-body {
+  padding: 12px 16px;
+  font-size: 12.5px;
+  color: var(--text);
+  line-height: 1.6;
+}
+#tut-tt-body strong { color: var(--bright); }
+#tut-tt-body .tut-action {
+  display: flex; align-items: flex-start; gap: 8px;
+  margin-top: 10px; padding: 9px 11px;
+  background: #eff6ff;
+  border-left: 3px solid var(--blue);
+  border-radius: 0 8px 8px 0;
+  font-size: 12px; color: #1e40af;
+}
+#tut-tt-body .tut-action .act-icon { flex-shrink: 0; font-size: 14px; }
+
+/* Progress bar inside tooltip */
+#tut-tt-progress {
+  height: 3px; background: #e2e8f0; margin: 0 16px 0;
+}
+#tut-tt-progress-fill {
+  height: 100%; background: linear-gradient(90deg, #6366f1, #0b5ed7);
+  border-radius: 2px;
+  transition: width .4s cubic-bezier(.22,1,.36,1);
+}
+
+#tut-tt-footer {
+  display: flex; gap: 8px; align-items: center;
+  padding: 10px 16px 14px;
+}
+#tut-tt-prev {
+  padding: 7px 14px;
+  background: var(--surface2); color: var(--dim);
+  border: 1px solid var(--border); border-radius: 8px;
+  font-size: 12px; font-weight: 600; cursor: pointer;
+  transition: all .15s;
+}
+#tut-tt-prev:hover:not(:disabled) { background: var(--border); color: var(--text); }
+#tut-tt-prev:disabled { opacity: .3; cursor: default; }
+#tut-tt-next {
+  flex: 1; padding: 8px;
+  background: var(--blue); color: #fff;
+  border: none; border-radius: 8px;
+  font-size: 13px; font-weight: 700; cursor: pointer;
+  transition: all .15s;
+}
+#tut-tt-next:hover { filter: brightness(1.1); }
+#tut-tt-next.finish { background: var(--green); }
+#tut-tt-next.waiting {
+  background: var(--surface2); color: var(--dim);
+  border: 1.5px dashed var(--border2); cursor: default;
+  font-size: 11px;
+}
+#tut-tt-skip {
+  font-size: 11px; color: var(--dim); background: none; border: none;
+  cursor: pointer; padding: 2px 4px; text-decoration: underline;
+  text-underline-offset: 3px;
+}
+#tut-tt-skip:hover { color: var(--text); }
+
+/* Spotlight ring around highlighted element */
+.tut-spotlight-ring {
+  position: fixed;
+  border-radius: 12px;
+  border: 2.5px solid rgba(99,102,241,0.8);
+  box-shadow: 0 0 0 4px rgba(99,102,241,0.2), 0 0 24px rgba(99,102,241,0.35);
+  pointer-events: none;
+  z-index: 1999;
+  transition: all .35s cubic-bezier(.22,1,.36,1);
+  display: none;
+  animation: ring-pulse 2s ease-in-out infinite;
+}
+.tut-spotlight-ring.show { display: block; }
+@keyframes ring-pulse {
+  0%, 100% { box-shadow: 0 0 0 4px rgba(99,102,241,0.2), 0 0 24px rgba(99,102,241,0.35); }
+  50%       { box-shadow: 0 0 0 6px rgba(99,102,241,0.12), 0 0 36px rgba(99,102,241,0.5); }
+}
+
+/* Help button */
+#tut-help-btn {
+  padding:5px 12px; border:1px solid var(--border2);
+  border-radius:7px; background:var(--surface2); color:var(--dim);
+  font-size:12px; font-weight:700; cursor:pointer; transition:all .15s;
+  display:flex; align-items:center; gap:5px;
+}
+#tut-help-btn:hover { background:var(--border); color:var(--text); }
+
+/* Step complete flash */
+@keyframes step-done {
+  0%  { box-shadow: 0 0 0 0 rgba(22,163,74,0.6); }
+  70% { box-shadow: 0 0 0 10px rgba(22,163,74,0); }
+  100%{ box-shadow: 0 0 0 0 rgba(22,163,74,0); }
+}
+.tut-step-done { animation: step-done .5s ease; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="header-title">Robot Sensor Game</div>
+    <span class="hbadge" id="mode-badge">Puzzle Mode</span>
+  </div>
+  <div class="mode-pills" id="mode-pills-wrap">
+    <button class="mode-pill active" id="pill-design">🛠 Design</button>
+    <button class="mode-pill" id="pill-sim">🚀 Simulate</button>
+  </div>
+  <div id="challenge-status">
+    <span id="challenge-label">Puzzle 1</span>
+    <span id="timer-display">30</span>
+  </div>
+  <button id="tut-help-btn">❓ How to Play</button>
+</header>
+
+<div class="instr-bar">
+  <div class="live-dot"></div>
+  <span id="instr">Design Mode — Drag sensors onto the robot. Watch your budget!</span>
+</div>
+
+<!-- ══ DESIGN SCREEN ══ -->
+<div id="design-screen" class="active">
+  <div class="preview-area">
+    <div id="design-robot-wrap">
+      <div id="design-robot-body"></div>
+      <div class="dwheel tl"></div><div class="dwheel bl"></div>
+      <div class="dwheel tr"></div><div class="dwheel br"></div>
+    </div>
+  </div>
+  <div class="sensor-sidebar">
+    <div class="sidebar-heading">Sensor Library</div>
+    <div id="budget-bar-wrap">
+      <div class="bb-label"><span>Credits used</span><strong id="budget-used-label">0 / 4</strong></div>
+      <div id="budget-track"><div id="budget-fill" style="width:0%"></div></div>
+      <div id="slots-info">Slots: <strong id="slots-used">0</strong> / <strong id="slots-max">3</strong></div>
+    </div>
+    <div class="sensor-card motion"    data-type="motion"    data-name="Motion &amp; Position"  data-cost="1"><span class="s-cost">1cr</span><span class="s-icon">📍</span><div class="s-name">Motion &amp; Position</div><div class="s-desc">Tracks velocity &amp; heading. Draws a movement trail.</div></div>
+    <div class="sensor-card proximity" data-type="proximity" data-name="Proximity &amp; Range"  data-cost="2"><span class="s-cost">2cr</span><span class="s-icon">📏</span><div class="s-name">Proximity &amp; Range</div><div class="s-desc">Fires a beam to detect obstacles ahead.</div></div>
+    <div class="sensor-card vision"    data-type="vision"    data-name="Vision &amp; Camera"    data-cost="3"><span class="s-cost">3cr</span><span class="s-icon">👁️</span><div class="s-name">Vision &amp; Camera</div><div class="s-desc">Detects AprilTags. Blocked by walls &amp; dark zones.</div></div>
+    <div class="count-badge" id="count-badge">Sensors placed: <strong>0</strong></div>
+    <div id="puzzle-info-card" class="hidden">
+      <h4 id="pi-title"></h4>
+      <div id="pi-desc"></div>
+      <div class="pi-constraint" id="pi-constraint"></div>
+    </div>
+    <div id="puzzle-select-wrap">
+      <label>Select Level</label>
+      <select id="puzzle-select">
+        <option value="p1">Level 1 — Open Field</option>
+        <option value="p2">Level 2 — Tight Budget</option>
+        <option value="p3">Level 3 — Low Light Lab</option>
+        <option value="p4">Level 4 — The Gauntlet</option>
+        <option value="p5">Level 5 — The Ramp</option>
+      </select>
+    </div>
+    <div class="sidebar-btns">
+      <button class="btn btn-primary" id="go-sim-btn">▶ Run</button>
+      <button class="btn btn-danger btn-sm" id="reset-design-btn">Reset</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SIMULATION SCREEN ══ -->
+<div id="sim-screen">
+  <div class="sim-canvas-area">
+    <canvas id="sim-canvas" width="640" height="400" tabindex="0"></canvas>
+    <div id="canvas-overlay"><div id="overlay-title"></div><div id="overlay-body"></div></div>
+    <div class="key-hints">
+      <span class="key">↑↓</span> Drive &nbsp;
+      <span class="key">←→</span> Rotate &nbsp;
+      <span style="opacity:.6" id="key-hint-note">or use the Code Panel below</span>
+    </div>
+  </div>
+
+  <div class="readings-panel">
+    <div class="panel-heading">// sensor_readings</div>
+    <div id="readings-container"></div>
+    <div class="sim-side-btns">
+      <button class="btn btn-challenge" id="challenge-btn">🎯 Start Puzzle</button>
+      <button id="lb-open-btn">🏆 Leaderboard</button>
+      <button class="btn btn-ghost" id="back-design-btn">← Back to Design</button>
+      <button class="btn btn-danger btn-sm" id="reset-sim-btn">Reset Position</button>
+    </div>
+  </div>
+
+  <!-- CODE PANEL -->
+  <div id="code-panel">
+    <div id="code-tabs">
+      <span class="code-tab active">⌨ Code Panel</span>
+      <span class="code-tab-spacer"></span>
+      <span id="prog-status">IDLE</span>
+    </div>
+    <div id="code-body">
+      <div id="block-palette">
+        <div class="pal-label">Blocks</div>
+        <div class="prog-block pal-block block-forward"   data-btype="forward"   title="Move forward">⬆<div class="pb-label">Move</div></div>
+        <div class="prog-block pal-block block-backward"  data-btype="backward"  title="Move backward">⬇<div class="pb-label">Back</div></div>
+        <div class="prog-block pal-block block-turnleft"  data-btype="turnleft"  title="Turn left">↺<div class="pb-label">Left</div></div>
+        <div class="prog-block pal-block block-turnright" data-btype="turnright" title="Turn right">↻<div class="pb-label">Right</div></div>
+        <div class="prog-block pal-block block-wait"      data-btype="wait"      title="Wait">⏸<div class="pb-label">Wait</div></div>
+        <div class="prog-block pal-block block-repeat"    data-btype="repeat"    title="Repeat all x times">🔁<div class="pb-label">Repeat</div></div>
+      </div>
+      <div id="sequence-wrap">
+        <div id="sequence-empty">← Drag blocks here to build your program</div>
+        <div id="sequence-list"></div>
+      </div>
+      <div id="run-controls">
+        <button class="rc-btn rc-run"   id="rc-run">▶ Run</button>
+        <button class="rc-btn rc-step"  id="rc-step">⏭ Step</button>
+        <button class="rc-btn rc-clear" id="rc-clear">✕ Clear</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ INTERACTIVE TUTORIAL SPOTLIGHT ══ -->
+<svg id="tut-curtain-svg" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <mask id="tut-hole-mask">
+      <rect width="100%" height="100%" fill="white"/>
+      <rect id="tut-hole-rect" x="0" y="0" width="0" height="0" rx="12" fill="black"/>
+    </mask>
+  </defs>
+  <rect width="100%" height="100%" fill="rgba(10,15,35,0.68)" mask="url(#tut-hole-mask)"/>
+</svg>
+
+<div class="tut-spotlight-ring" id="tut-ring"></div>
+
+<div id="tut-tooltip" data-arrow="none">
+  <div id="tut-tt-header">
+    <div id="tut-tt-icon">🤖</div>
+    <div id="tut-tt-meta">
+      <div id="tut-tt-step">Step 1 of 8</div>
+      <div id="tut-tt-title">Welcome!</div>
+    </div>
+  </div>
+  <div id="tut-tt-progress"><div id="tut-tt-progress-fill" style="width:0%"></div></div>
+  <div id="tut-tt-body"></div>
+  <div id="tut-tt-footer">
+    <button id="tut-tt-prev">← Back</button>
+    <button id="tut-tt-next">Next →</button>
+    <button id="tut-tt-skip">Skip</button>
+  </div>
+</div>
+
+<!-- ══ LEADERBOARD MODAL ══ -->
+<div id="lb-overlay">
+  <div id="lb-modal">
+    <div id="lb-header">
+      <div>
+        <h2>🏆 Leaderboard</h2>
+        <div class="lb-subtitle">// robot_sensor_game.scores [ localStorage ]</div>
+      </div>
+      <button id="lb-close">✕</button>
+    </div>
+    <div id="lb-tabs">
+      <button class="lb-tab active" data-level="all">All Levels</button>
+      <button class="lb-tab" data-level="p1">Lvl 1</button>
+      <button class="lb-tab" data-level="p2">Lvl 2</button>
+      <button class="lb-tab" data-level="p3">Lvl 3</button>
+      <button class="lb-tab" data-level="p4">Lvl 4</button>
+      <button class="lb-tab" data-level="p5">Lvl 5</button>
+    </div>
+    <div id="lb-body"></div>
+    <div id="lb-footer">
+      <input id="lb-name-input" type="text" maxlength="20" placeholder="Enter your name to save score…">
+      <button id="lb-save-btn" disabled>Save Score</button>
+      <button id="lb-clear-btn" title="Clear all scores">🗑 Clear</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════════════════
+const CANVAS_W   = 640;
+const CANVAS_H   = 400;
+const ROBOT_R    = 26;
+const FOV_DEG    = 68;
+const TRAIL_MAX  = 80;
+const SPD        = 2.8;
+const ROT        = 3.2;
+
+const LS_KEY     = 'robotSensorGame_leaderboard_v1';
+const TUT_KEY    = 'robotSensorGame_tutSeen_v2';
+
+// ═══════════════════════════════════════════════════
+// PUZZLE DEFINITIONS
+// ═══════════════════════════════════════════════════
+const PUZZLES = {
+  p1:{
+    name:'Level 1 — Open Field', creditLimit:4, slotLimit:3,
+    startX:320, startY:200,
+    desc:'Find the goal tag using less than 4 credits.',
+    constraint:'Real robots require sensor tradeoffs. Choose wisely.',
+    camRange:200, darkZones:[], ramp:null,
+    obs:[
+      {x:40,y:40,w:80,h:12},{x:40,y:40,w:12,h:80},
+      {x:520,y:40,w:80,h:12},{x:588,y:40,w:12,h:80},
+      {x:40,y:348,w:80,h:12},{x:40,y:268,w:12,h:92},
+      {x:520,y:348,w:80,h:12},{x:588,y:268,w:12,h:92},
+    ],
+    tags:[{id:0,x:80,y:80,size:28,label:'AT#0'},{id:1,x:560,y:340,size:28,label:'AT#1'},
+          {id:2,x:560,y:60,size:28,label:'AT#2'},{id:3,x:80,y:340,size:28,label:'AT#3'}],
+    challenges:[{tagId:1,timeLimit:35,name:'Level 1a'},{tagId:2,timeLimit:30,name:'Level 1b'}],
+  },
+  p2:{
+    name:'Level 2 — Tight Budget', creditLimit:3, slotLimit:2,
+    startX:320, startY:200,
+    desc:"Only 3 credits and 2 slots. Vision (3cr) and Proximity (2cr) can't coexist.",
+    constraint:'Robots have strict hardware cost limits.',
+    camRange:180, darkZones:[], ramp:null,
+    obs:[
+      {x:30,y:30,w:90,h:12},{x:30,y:30,w:12,h:90},
+      {x:520,y:30,w:90,h:12},{x:598,y:30,w:12,h:90},
+      {x:30,y:358,w:90,h:12},{x:30,y:268,w:12,h:102},
+      {x:520,y:358,w:90,h:12},{x:598,y:268,w:12,h:102},
+      {x:200,y:120,w:12,h:160},{x:428,y:120,w:12,h:160},
+      {x:200,y:120,w:240,h:12},
+    ],
+    tags:[{id:0,x:100,y:200,size:28,label:'AT#0'},{id:1,x:540,y:200,size:28,label:'AT#1'},
+          {id:2,x:315,y:310,size:28,label:'AT#2'},{id:3,x:315,y:60,size:28,label:'AT#3'}],
+    challenges:[{tagId:2,timeLimit:35,name:'Level 2a'},{tagId:1,timeLimit:28,name:'Level 2b'}],
+  },
+  p3:{
+    name:'Level 3 — Low Light Lab', creditLimit:4, slotLimit:2,
+    startX:320, startY:200,
+    desc:'Dark zones cut camera range. IR proximity still works in the dark.',
+    constraint:'Camera sensors degrade in poor lighting. Proximity (IR) works where vision fails.',
+    camRange:120, ramp:null,
+    darkZones:[{x:60,y:60,w:180,h:120},{x:400,y:220,w:180,h:130},{x:200,y:280,w:140,h:100}],
+    obs:[
+      {x:20,y:20,w:120,h:12},{x:20,y:20,w:12,h:120},
+      {x:508,y:20,w:120,h:12},{x:608,y:20,w:12,h:120},
+      {x:20,y:368,w:120,h:12},{x:20,y:248,w:12,h:132},
+      {x:508,y:368,w:120,h:12},{x:608,y:248,w:12,h:132},
+      {x:260,y:100,w:12,h:100},{x:368,y:100,w:12,h:100},
+      {x:120,y:230,w:100,h:12},{x:420,y:170,w:100,h:12},
+    ],
+    tags:[{id:0,x:140,y:330,size:28,label:'AT#0'},{id:1,x:500,y:80,size:28,label:'AT#1'},
+          {id:2,x:310,y:340,size:28,label:'AT#2'},{id:3,x:520,y:310,size:28,label:'AT#3'}],
+    challenges:[{tagId:0,timeLimit:40,name:'Level 3a'},{tagId:3,timeLimit:35,name:'Level 3b'}],
+  },
+  p4:{
+    name:'Level 4 — The Gauntlet', creditLimit:5, slotLimit:3,
+    startX:320, startY:200,
+    desc:'Dark zones, tight corridors, AND a strict budget. Full emergent navigation required.',
+    constraint:'Robots must navigate constrained environments under hardware limits.',
+    camRange:140, ramp:null,
+    darkZones:[{x:80,y:80,w:120,h:100},{x:440,y:80,w:120,h:100},{x:240,y:270,w:160,h:100}],
+    obs:[
+      {x:20,y:20,w:100,h:12},{x:20,y:20,w:12,h:100},
+      {x:500,y:20,w:120,h:12},{x:608,y:20,w:12,h:120},
+      {x:20,y:368,w:100,h:12},{x:20,y:268,w:12,h:112},
+      {x:500,y:368,w:120,h:12},{x:608,y:268,w:12,h:112},
+      {x:190,y:80,w:12,h:100},{x:180,y:240,w:280,h:12},
+      {x:440,y:80,w:12,h:100},{x:280,y:130,w:80,h:12},
+    ],
+    tags:[{id:0,x:100,y:300,size:28,label:'AT#0'},{id:1,x:550,y:300,size:28,label:'AT#1'},
+          {id:2,x:100,y:60,size:28,label:'AT#2'},{id:3,x:550,y:60,size:28,label:'AT#3'},
+          {id:4,x:320,y:190,size:28,label:'AT#4'}],
+    challenges:[{tagId:0,timeLimit:40,name:'Gauntlet 1'},{tagId:3,timeLimit:35,name:'Gauntlet 2'},{tagId:4,timeLimit:30,name:'Final'}],
+  },
+  p5:{
+    name:'Level 5 — The Ramp', creditLimit:5, slotLimit:3,
+    startX:240, startY:330,
+    desc:'The upper zone is ONLY reachable via the one-way ramp. Once up, you cannot come back down.',
+    constraint:'Robots commit to multi-level paths. Wrong sensor choice means mission failure.',
+    camRange:155,
+    ramp:{ x:475, y:238, w:85, lineY:238 },
+    darkZones:[{x:0, y:0, w:650, h:240}],
+    obs:[
+      {x:0,   y:238, w:475, h:12},
+      {x:560, y:238, w:80,  h:12},
+      {x:360, y:310, w:100, h:12},
+    ],
+    tags:[
+      {id:0, x:450, y:330, size:28, label:'AT#0'},
+      {id:1, x:120, y:120, size:28, label:'AT#1'},
+      {id:2, x:500, y:115, size:28, label:'AT#2'},
+      {id:3, x:310, y:175, size:28, label:'AT#3'},
+    ],
+    challenges:[
+      {tagId:0, timeLimit:25, name:'Part 1 — Learn the Bottom'},
+      {tagId:1, timeLimit:55, name:'Part 2 — Cross the Ramp'},
+      {tagId:3, timeLimit:45, name:'Part 3 — Upper Zone'},
+    ],
+  },
+};
+
+const BLOCK_DEFS = {
+  forward:   { icon:'⬆', label:'Move',   cls:'block-forward',   defaultParam:60,  unit:'px',  description:'Move forward N px' },
+  backward:  { icon:'⬇', label:'Back',   cls:'block-backward',  defaultParam:60,  unit:'px',  description:'Move backward N px' },
+  turnleft:  { icon:'↺', label:'Left',   cls:'block-turnleft',  defaultParam:90,  unit:'°',   description:'Turn left N degrees' },
+  turnright: { icon:'↻', label:'Right',  cls:'block-turnright', defaultParam:90,  unit:'°',   description:'Turn right N degrees' },
+  wait:      { icon:'⏸', label:'Wait',   cls:'block-wait',      defaultParam:1,   unit:'s',   description:'Wait N seconds' },
+  repeat:    { icon:'🔁', label:'Repeat', cls:'block-repeat',    defaultParam:2,   unit:'×',   description:'Repeat whole sequence N times' },
+};
+
+// ═══════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════
+let currentKey = 'p1';
+let puzzle     = PUZZLES.p1;
+const placedSensors = [];
+const robot = {x:320,y:200,angle:0};
+const trail = [];
+const keys  = new Set();
+let speed=0, animRef=null, lastT=0;
+let challengeActive=false, challengeIndex=0, challengeTimeLeft=0, challengeTimerRef=null;
+const SENSOR_COSTS = {motion:1,proximity:2,vision:3};
+const COLORS       = {motion:'#ffb700',proximity:'#219ebc',vision:'#9333ea'};
+
+let program      = [];
+let progRunning  = false;
+let progStep     = 0;
+let progFrames   = 0;
+let progFramesNeeded = 0;
+let progStepping = false;
+let progRepeatCount = 0;
+let progRepeatTotal = 0;
+let progTurnRotated = 0;
+let loopActive  = false;
+let cachedVis   = [];
+let cachedTags  = [];
+
+let pendingScore = null;
+let lbActiveTab  = 'all';
+
+// ═══════════════════════════════════════════════════
+// ELEMENTS
+// ═══════════════════════════════════════════════════
+const designScreen   = document.getElementById('design-screen');
+const simScreen      = document.getElementById('sim-screen');
+const pillDesign     = document.getElementById('pill-design');
+const pillSim        = document.getElementById('pill-sim');
+const instr          = document.getElementById('instr');
+const robotBody      = document.getElementById('design-robot-body');
+const countBadge     = document.getElementById('count-badge');
+const readingsCont   = document.getElementById('readings-container');
+const canvas         = document.getElementById('sim-canvas');
+const ctx            = canvas.getContext('2d');
+const challengeStatus= document.getElementById('challenge-status');
+const timerDisplay   = document.getElementById('timer-display');
+const challengeLabel = document.getElementById('challenge-label');
+const challengeBtn   = document.getElementById('challenge-btn');
+const overlay        = document.getElementById('canvas-overlay');
+const overlayTitle   = document.getElementById('overlay-title');
+const overlayBody    = document.getElementById('overlay-body');
+const budgetFill     = document.getElementById('budget-fill');
+const budgetUsedLbl  = document.getElementById('budget-used-label');
+const slotsUsed      = document.getElementById('slots-used');
+const slotsMax       = document.getElementById('slots-max');
+const puzzleSelect   = document.getElementById('puzzle-select');
+const seqList        = document.getElementById('sequence-list');
+const seqEmpty       = document.getElementById('sequence-empty');
+const progStatus     = document.getElementById('prog-status');
+const rcRun          = document.getElementById('rc-run');
+const rcStep         = document.getElementById('rc-step');
+const rcClear        = document.getElementById('rc-clear');
+
+// ═══════════════════════════════════════════════════
+// LEADERBOARD
+// ═══════════════════════════════════════════════════
+function lbLoad() {
+  try { const raw = localStorage.getItem(LS_KEY); return raw ? JSON.parse(raw) : []; }
+  catch (e) { return []; }
+}
+function lbSave(scores) {
+  try { localStorage.setItem(LS_KEY, JSON.stringify(scores)); } catch(e){}
+}
+function lbAddEntry(entry) {
+  const scores = lbLoad();
+  scores.push(entry);
+  scores.sort((a,b) => b.timeLeft - a.timeLeft);
+  lbSave(scores);
+  return scores;
+}
+function lbClearAll() { try { localStorage.removeItem(LS_KEY); } catch(e){} }
+function escHtml(str) { return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function lbRender() {
+  const scores   = lbLoad();
+  const body     = document.getElementById('lb-body');
+  const filtered = lbActiveTab === 'all' ? scores : scores.filter(s=>s.levelKey===lbActiveTab);
+  if (!filtered.length) {
+    body.innerHTML=`<div class="lb-empty"><span class="lb-empty-icon">🤖</span>No scores yet${lbActiveTab!=='all'?' for this level':''}.<br>Complete a puzzle challenge and save your score!</div>`;
+    return;
+  }
+  body.innerHTML='';
+  filtered.forEach((entry,idx)=>{
+    const row=document.createElement('div');
+    const rankClass=idx===0?'gold':idx===1?'silver':idx===2?'bronze':'';
+    const medal=idx===0?'🥇':idx===1?'🥈':idx===2?'🥉':`#${idx+1}`;
+    row.className=`lb-row${rankClass?' '+rankClass:''}`;
+    row.style.animationDelay=`${idx*40}ms`;
+    const sensorPips=(entry.sensors||[]).map(s=>`<span class="lb-sensor-pip ${s}">${{motion:'📍',proximity:'📏',vision:'👁'}[s]||s}</span>`).join('');
+    const dateStr=entry.date?new Date(entry.date).toLocaleDateString('en-AU',{day:'numeric',month:'short'}):'—';
+    row.innerHTML=`<div class="lb-rank">${medal}</div><div class="lb-info"><div class="lb-name">${escHtml(entry.name||'Anonymous')}</div><div class="lb-meta">${escHtml(entry.levelName)} · ${escHtml(entry.challengeName)} · ${dateStr}</div></div><div class="lb-score-col"><div class="lb-sensors">${sensorPips}</div></div><div class="lb-score-col"><div class="lb-time">+${entry.timeLeft}s</div><div class="lb-time-label">remaining</div></div>`;
+    body.appendChild(row);
+  });
+}
+
+function lbOpen() {
+  document.getElementById('lb-overlay').classList.add('show');
+  lbRender();
+  const saveBtn=document.getElementById('lb-save-btn'), nameInput=document.getElementById('lb-name-input');
+  saveBtn.disabled=!pendingScore||!nameInput.value.trim();
+  if(pendingScore) nameInput.focus();
+}
+function lbClose() { document.getElementById('lb-overlay').classList.remove('show'); }
+
+document.querySelectorAll('.lb-tab').forEach(tab=>{
+  tab.addEventListener('click',()=>{
+    document.querySelectorAll('.lb-tab').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active'); lbActiveTab=tab.dataset.level; lbRender();
+  });
+});
+document.getElementById('lb-open-btn').addEventListener('click', lbOpen);
+document.getElementById('lb-close').addEventListener('click', lbClose);
+document.getElementById('lb-overlay').addEventListener('click',e=>{if(e.target===document.getElementById('lb-overlay'))lbClose();});
+
+const lbNameInput=document.getElementById('lb-name-input');
+const lbSaveBtn  =document.getElementById('lb-save-btn');
+lbNameInput.addEventListener('input',()=>{ lbSaveBtn.disabled=!pendingScore||!lbNameInput.value.trim(); });
+lbSaveBtn.addEventListener('click',()=>{
+  if(!pendingScore||!lbNameInput.value.trim()) return;
+  const entry={name:lbNameInput.value.trim(),levelKey:pendingScore.levelKey,levelName:pendingScore.levelName,challengeName:pendingScore.challengeName,timeLeft:pendingScore.timeLeft,sensors:pendingScore.sensors,date:new Date().toISOString()};
+  lbAddEntry(entry); pendingScore=null; lbSaveBtn.disabled=true; lbNameInput.value='';
+  lbNameInput.placeholder='✓ Score saved!';
+  const targetTab=document.querySelector(`.lb-tab[data-level="${entry.levelKey}"]`);
+  if(targetTab){document.querySelectorAll('.lb-tab').forEach(t=>t.classList.remove('active'));targetTab.classList.add('active');lbActiveTab=entry.levelKey;}
+  lbRender();
+  setTimeout(()=>{lbNameInput.placeholder='Enter your name to save score…';},2500);
+});
+document.getElementById('lb-clear-btn').addEventListener('click',()=>{
+  if(confirm('Clear ALL leaderboard scores? This cannot be undone.')){lbClearAll();lbRender();}
+});
+
+// ═══════════════════════════════════════════════════
+// PUZZLE SELECTION
+// ═══════════════════════════════════════════════════
+puzzleSelect.addEventListener('change',()=>{ currentKey=puzzleSelect.value; puzzle=PUZZLES[currentKey]; challengeIndex=0; clearSensors(); updateBudgetUI(); updatePuzzleInfo(); });
+function updatePuzzleInfo(){
+  const card=document.getElementById('puzzle-info-card');
+  card.classList.remove('hidden');
+  document.getElementById('pi-title').textContent=puzzle.name;
+  document.getElementById('pi-desc').textContent=puzzle.desc;
+  document.getElementById('pi-constraint').textContent=puzzle.constraint;
+  slotsMax.textContent=puzzle.slotLimit;
+}
+function updateBudgetUI(){
+  const used=placedSensors.reduce((a,s)=>a+SENSOR_COSTS[s.type],0);
+  const limit=puzzle.creditLimit;
+  const sCount=new Set(placedSensors.map(s=>s.type)).size;
+  const pct=Math.min(100,(used/limit)*100);
+  budgetFill.style.width=pct+'%';
+  budgetFill.style.background=pct>90?'#dc2626':pct>65?'#d97706':'#16a34a';
+  budgetUsedLbl.textContent=`${used} / ${limit}`;
+  slotsUsed.textContent=sCount;
+  countBadge.innerHTML=`Sensors placed: <strong>${placedSensors.length}</strong>`;
+  updateCardAvailability();
+}
+function updateCardAvailability(){
+  const used=placedSensors.reduce((a,s)=>a+SENSOR_COSTS[s.type],0);
+  const slotUsed=new Set(placedSensors.map(s=>s.type)).size;
+  document.querySelectorAll('.sensor-card').forEach(card=>{
+    const cost=parseInt(card.dataset.cost),type=card.dataset.type;
+    const newSlot=!placedSensors.some(s=>s.type===type);
+    card.classList.toggle('disabled',(used+cost)>puzzle.creditLimit||(newSlot&&slotUsed>=puzzle.slotLimit));
+  });
+}
+
+// ═══════════════════════════════════════════════════
+// MODE SWITCHING
+// ═══════════════════════════════════════════════════
+function setMode(mode){
+  if(mode==='design'){
+    designScreen.classList.add('active'); simScreen.classList.remove('active');
+    pillDesign.classList.add('active');   pillSim.classList.remove('active');
+    instr.textContent='Design Mode — Drag sensors onto the robot. Watch your budget!';
+    loopActive=false; cancelAnimationFrame(animRef); stopChallenge(); stopProgram();
+  } else {
+    designScreen.classList.remove('active'); simScreen.classList.add('active');
+    pillSim.classList.add('active'); pillDesign.classList.remove('active');
+    instr.textContent='Simulation Mode — Drive manually or program the Code Panel below.';
+    buildReadings(); resetSim(); startLoop(); canvas.focus();
+  }
+}
+pillDesign.addEventListener('click',()=>{ setMode('design'); tutHandleAction('switchDesign'); });
+pillSim.addEventListener('click',  ()=>{ setMode('sim');    tutHandleAction('switchSim'); });
+document.getElementById('go-sim-btn').addEventListener('click',()=>{ setMode('sim'); tutHandleAction('switchSim'); });
+document.getElementById('back-design-btn').addEventListener('click',()=>{ setMode('design'); tutHandleAction('switchDesign'); });
+
+// ═══════════════════════════════════════════════════
+// SENSOR DRAG & DROP
+// ═══════════════════════════════════════════════════
+let sensorDrag = null;
+document.querySelectorAll('.sensor-card').forEach(card=>{
+  card.addEventListener('mousedown',e=>{
+    if(card.classList.contains('disabled')) return;
+    e.preventDefault();
+    const rect=card.getBoundingClientRect();
+    const ghost=card.cloneNode(true);
+    ghost.className='drag-ghost sensor-card '+card.dataset.type;
+    ghost.style.cssText+=`width:${rect.width}px;left:${rect.left}px;top:${rect.top}px;`;
+    document.body.appendChild(ghost);
+    sensorDrag={type:card.dataset.type,name:card.dataset.name,cost:parseInt(card.dataset.cost),ghost,ox:e.clientX-rect.left,oy:e.clientY-rect.top};
+  });
+});
+document.addEventListener('mousemove',e=>{
+  if(sensorDrag&&sensorDrag.ghost){sensorDrag.ghost.style.left=`${e.clientX-sensorDrag.ox}px`;sensorDrag.ghost.style.top=`${e.clientY-sensorDrag.oy}px`;}
+});
+document.addEventListener('mouseup',e=>{
+  if(!sensorDrag) return;
+  sensorDrag.ghost.remove();
+  const br=robotBody.getBoundingClientRect();
+  if(e.clientX>=br.left&&e.clientX<=br.right&&e.clientY>=br.top&&e.clientY<=br.bottom){
+    const relX=(e.clientX-br.left)/br.width, relY=(e.clientY-br.top)/br.height;
+    placedSensors.push({type:sensorDrag.type,name:sensorDrag.name,cost:sensorDrag.cost,relX,relY});
+    const dot=document.createElement('div');
+    dot.className=`placed-dot ${sensorDrag.type}`;
+    dot.style.left=`${relX*100}%`; dot.style.top=`${relY*100}%`;
+    dot.textContent={motion:'📍',proximity:'📏',vision:'👁'}[sensorDrag.type]||'•';
+    robotBody.appendChild(dot);
+    updateBudgetUI();
+    instr.textContent=`✓ "${sensorDrag.name}" placed. Budget: ${placedSensors.reduce((a,s)=>a+s.cost,0)}cr`;
+    tutHandleAction('sensorPlaced', sensorDrag.type);
+  } else {
+    const used=placedSensors.reduce((a,s)=>a+SENSOR_COSTS[s.type],0);
+    if((used+sensorDrag.cost)>puzzle.creditLimit){
+      instr.textContent='⚠ Not enough credits for that sensor!';
+      setTimeout(()=>{instr.textContent='Design Mode — Drag sensors onto the robot. Watch your budget!';},2000);
+    }
+  }
+  sensorDrag=null;
+});
+function clearSensors(){
+  placedSensors.length=0;
+  robotBody.querySelectorAll('.placed-dot').forEach(d=>d.remove());
+  updateBudgetUI();
+}
+document.getElementById('reset-design-btn').addEventListener('click',()=>{clearSensors();instr.textContent='Design Mode — Drag sensors onto the robot. Watch your budget!';});
+
+// ═══════════════════════════════════════════════════
+// CHALLENGE
+// ═══════════════════════════════════════════════════
+function startChallenge(){
+  if(!placedSensors.length){showOverlay('⚠️ No Sensors!','Place at least one sensor in Design Mode.',2200);return;}
+  if(!program.length){showOverlay('⚠️ No Program!','Add blocks to the Code Panel before starting a puzzle.',2400);return;}
+  challengeActive=true;
+  const c=puzzle.challenges[challengeIndex];
+  challengeTimeLeft=c.timeLimit;
+  challengeLabel.textContent=c.name;
+  timerDisplay.textContent=challengeTimeLeft;
+  timerDisplay.classList.remove('urgent');
+  challengeStatus.classList.add('active');
+  challengeBtn.textContent='⛔ Stop';
+  updateChallengeCard(); resetSim(); hideOverlay(); keys.clear();
+  startProgram();
+  clearInterval(challengeTimerRef);
+  challengeTimerRef=setInterval(()=>{
+    challengeTimeLeft--;
+    timerDisplay.textContent=challengeTimeLeft;
+    if(challengeTimeLeft<=8) timerDisplay.classList.add('urgent');
+    updateChallengeCard();
+    if(challengeTimeLeft<=0){stopChallenge();showOverlay("⏱ Time's Up!","Didn't reach the goal tag. Try a different sensor or program!",0);}
+  },1000);
+  tutHandleAction('startPuzzle');
+}
+function stopChallenge(){
+  challengeActive=false; clearInterval(challengeTimerRef);
+  challengeStatus.classList.remove('active'); timerDisplay.classList.remove('urgent');
+  challengeBtn.textContent='🎯 Start Puzzle'; stopProgram(); updateChallengeCard();
+}
+function winChallenge(){
+  clearInterval(challengeTimerRef); challengeActive=false;
+  challengeStatus.classList.remove('active'); timerDisplay.classList.remove('urgent');
+  challengeBtn.textContent='🎯 Start Puzzle'; stopProgram();
+  const c=puzzle.challenges[challengeIndex];
+  const isLast=challengeIndex>=puzzle.challenges.length-1;
+  const uniqueSensors=[...new Set(placedSensors.map(s=>s.type))];
+  pendingScore={levelKey:currentKey,levelName:puzzle.name,challengeName:c.name,timeLeft:challengeTimeLeft,sensors:uniqueSensors};
+  lbSaveBtn.disabled=!lbNameInput.value.trim();
+  challengeIndex=isLast?challengeIndex:challengeIndex+1;
+  showOverlay(isLast?'🏆 Level Complete!':`✅ ${c.name} Done!`,(isLast?`All tags reached with ${challengeTimeLeft}s remaining!`:`Tag found with ${challengeTimeLeft}s to spare! Next: ${puzzle.challenges[challengeIndex].name}`)+'\n\n🏆 Open the Leaderboard to save your score!',isLast?0:4000);
+  updateChallengeCard();
+}
+function updateChallengeCard(){
+  const card=document.getElementById('r-challenge');
+  if(!card) return;
+  const ci=Math.min(challengeIndex,puzzle.challenges.length-1);
+  const c=puzzle.challenges[ci];
+  const hasPending=!!pendingScore;
+  const hint=document.getElementById('key-hint-note');
+  if(hint) hint.textContent=challengeActive?'⛔ Arrow keys locked — program is running':'or use the Code Panel below';
+  if(!challengeActive){
+    card.className='reading-card constraint';
+    card.innerHTML=`<div class="r-label" style="color:#15803d">🎯 Puzzle Goal${hasPending?'<span class="lb-pending-badge">Score ready!</span>':''}</div><div style="font-size:11px;color:var(--dim);margin-top:4px;line-height:1.5">Find <strong>AT#${c.tagId}</strong> in <strong>${c.timeLimit}s</strong><br>Budget: ${placedSensors.reduce((a,s)=>a+s.cost,0)} / ${puzzle.creditLimit}cr<br><em style="font-size:10px;opacity:.8">${puzzle.constraint}</em></div>`;
+  } else {
+    card.className='reading-card constraint active-c';
+    card.innerHTML=`<div class="r-label" style="color:#1d4ed8">🎯 ${c.name}</div><div style="font-size:11px;color:var(--dim);margin-top:4px;line-height:1.5">Find <strong>AT#${c.tagId}</strong><br>Time: <strong style="font-family:'Courier New';color:${challengeTimeLeft<=8?'#dc2626':'#1d4ed8'}">${challengeTimeLeft}s</strong><br><span style="font-size:10px;opacity:.7">⌨ Keys locked · auto-program running</span></div>`;
+  }
+}
+challengeBtn.addEventListener('click',()=>{ if(challengeActive) stopChallenge(); else startChallenge(); });
+
+// ═══════════════════════════════════════════════════
+// OVERLAY
+// ═══════════════════════════════════════════════════
+function showOverlay(title,body,ms){ overlayTitle.textContent=title; overlayBody.textContent=body; overlay.classList.add('show'); if(ms>0) setTimeout(hideOverlay,ms); }
+function hideOverlay(){ overlay.classList.remove('show'); }
+canvas.addEventListener('click',hideOverlay);
+
+// ═══════════════════════════════════════════════════
+// SIMULATION
+// ═══════════════════════════════════════════════════
+window.addEventListener('keydown',e=>{
+  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) e.preventDefault();
+  if(!progRunning&&!challengeActive) keys.add(e.key);
+  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) tutHandleAction('usedArrows');
+});
+window.addEventListener('keyup',e=>keys.delete(e.key));
+document.getElementById('reset-sim-btn').addEventListener('click',()=>{resetSim();hideOverlay();stopChallenge();stopProgram();});
+
+function resetSim(){ robot.x=puzzle.startX||320; robot.y=puzzle.startY||200; robot.angle=0; trail.length=0; speed=0; keys.clear(); cachedVis=[]; cachedTags=[]; }
+function collides(x,y){ if(x-ROBOT_R<1||x+ROBOT_R>CANVAS_W-1||y-ROBOT_R<1||y+ROBOT_R>CANVAS_H-1) return true; for(const o of puzzle.obs){const nx=Math.max(o.x,Math.min(o.x+o.w,x)),ny=Math.max(o.y,Math.min(o.y+o.h,y));if((x-nx)**2+(y-ny)**2<ROBOT_R*ROBOT_R) return true;} return false; }
+function castRay(x0,y0,angleDeg,maxDist=260){ const dx=Math.sin(angleDeg*Math.PI/180),dy=-Math.cos(angleDeg*Math.PI/180); for(let d=0;d<=maxDist;d+=2){const x=x0+dx*d,y=y0+dy*d; if(x<0||x>CANVAS_W||y<0||y>CANVAS_H) return d; for(const o of puzzle.obs) if(x>=o.x&&x<=o.x+o.w&&y>=o.y&&y<=o.y+o.h) return d;} return maxDist; }
+function inDark(x,y){ return puzzle.darkZones.some(dz=>x>=dz.x&&x<=dz.x+dz.w&&y>=dz.y&&y<=dz.y+dz.h); }
+function camRangeAt(x,y){ return inDark(x,y)?Math.round(puzzle.camRange*0.35):puzzle.camRange; }
+function hasLOS(x0,y0,x1,y1){ const steps=Math.ceil(Math.hypot(x1-x0,y1-y0)/3); for(let i=1;i<steps;i++){const t=i/steps,px=x0+(x1-x0)*t,py=y0+(y1-y0)*t; for(const o of puzzle.obs) if(px>=o.x&&px<=o.x+o.w&&py>=o.y&&py<=o.y+o.h) return false;} return true; }
+function visibleObs(){ const fovRad=FOV_DEG*Math.PI/180,range=camRangeAt(robot.x,robot.y),fwdX=Math.sin(robot.angle*Math.PI/180),fwdY=-Math.cos(robot.angle*Math.PI/180); return puzzle.obs.filter(o=>{const cx=o.x+o.w/2,cy=o.y+o.h/2,dx=cx-robot.x,dy=cy-robot.y,dist=Math.sqrt(dx*dx+dy*dy); if(dist>range) return false; return Math.acos(Math.max(-1,Math.min(1,(dx*fwdX+dy*fwdY)/dist)))<=fovRad;}); }
+function visibleTags(){ if(!placedSensors.some(s=>s.type==='vision')) return []; const fovRad=FOV_DEG*Math.PI/180,fwdX=Math.sin(robot.angle*Math.PI/180),fwdY=-Math.cos(robot.angle*Math.PI/180),baseRange=camRangeAt(robot.x,robot.y); return puzzle.tags.filter(t=>{const dx=t.x-robot.x,dy=t.y-robot.y,dist=Math.sqrt(dx*dx+dy*dy),effective=inDark(t.x,t.y)?baseRange*0.5:baseRange; if(dist>effective) return false; if(Math.acos(Math.max(-1,Math.min(1,(dx*fwdX+dy*fwdY)/dist)))>fovRad) return false; return hasLOS(robot.x,robot.y,t.x,t.y);}); }
+
+// ═══════════════════════════════════════════════════
+// CODE PANEL
+// ═══════════════════════════════════════════════════
+let codeDrag = null;
+
+function makeSeqBlock(item,idx){
+  const def=BLOCK_DEFS[item.type];
+  const el=document.createElement('div');
+  el.className=`prog-block seq-block ${def.cls}`;
+  el.dataset.idx=idx;
+  el.innerHTML=`<button class="sb-del" data-idx="${idx}">×</button><div class="sb-icon">${def.icon}</div><div class="sb-label">${def.label}</div><div class="sb-param"><input class="sb-num" type="number" value="${item.param}" min="1" max="999" data-idx="${idx}"><span class="sb-unit">${def.unit}</span></div>`;
+  return el;
+}
+
+function renderSequence(){
+  seqList.innerHTML='';
+  seqEmpty.style.display=program.length?'none':'block';
+  program.forEach((item,idx)=>{
+    const el=makeSeqBlock(item,idx);
+    if(progRunning&&idx===progStep) el.classList.add('active-step');
+    seqList.appendChild(el);
+  });
+  seqList.querySelectorAll('.sb-num').forEach(input=>{
+    input.addEventListener('change',e=>{const i=parseInt(e.target.dataset.idx);program[i].param=Math.max(1,parseInt(e.target.value)||1);e.target.value=program[i].param;});
+    input.addEventListener('mousedown',e=>e.stopPropagation());
+    input.addEventListener('click',e=>e.stopPropagation());
+  });
+  seqList.querySelectorAll('.sb-del').forEach(btn=>{
+    btn.addEventListener('mousedown',e=>{e.stopPropagation();});
+    btn.addEventListener('click',e=>{e.stopPropagation();const i=parseInt(e.target.dataset.idx);program.splice(i,1);renderSequence();});
+  });
+  seqList.querySelectorAll('.seq-block').forEach((el,idx)=>{
+    el.addEventListener('mousedown',e=>{
+      if(e.target.classList.contains('sb-del')||e.target.classList.contains('sb-num')) return;
+      e.preventDefault();
+      startCodeDrag('sequence',program[idx].type,idx,el,e,program[idx].param);
+    });
+  });
+}
+
+function startCodeDrag(source,btype,idx,sourceEl,e,srcParam){
+  const def=BLOCK_DEFS[btype];
+  const rect=sourceEl.getBoundingClientRect();
+  const ghost=document.createElement('div');
+  ghost.className=`prog-block seq-block ${def.cls} code-drag-ghost`;
+  ghost.innerHTML=`<div class="sb-icon">${def.icon}</div><div class="sb-label">${def.label}</div>`;
+  ghost.style.width='66px'; ghost.style.height='100px';
+  ghost.style.left=rect.left+'px'; ghost.style.top=rect.top+'px';
+  document.body.appendChild(ghost);
+  const param=(source==='sequence')?srcParam:def.defaultParam;
+  codeDrag={source,btype,idx,param,ghost,ox:e.clientX-rect.left,oy:e.clientY-rect.top};
+}
+
+document.querySelectorAll('.pal-block').forEach(pal=>{
+  pal.addEventListener('mousedown',e=>{
+    e.preventDefault();
+    startCodeDrag('palette',pal.dataset.btype,-1,pal,e,BLOCK_DEFS[pal.dataset.btype].defaultParam);
+  });
+});
+
+document.addEventListener('mousemove',e=>{
+  if(!codeDrag) return;
+  codeDrag.ghost.style.left=`${e.clientX-codeDrag.ox}px`;
+  codeDrag.ghost.style.top=`${e.clientY-codeDrag.oy}px`;
+  showInsertMarker(e.clientX,e.clientY);
+});
+
+document.addEventListener('mouseup',e=>{
+  if(!codeDrag) return;
+  codeDrag.ghost.remove(); clearInsertMarker();
+  const insertIdx=getInsertIndex(e.clientX,e.clientY);
+  if(insertIdx!==null){
+    const newItem={type:codeDrag.btype,param:codeDrag.param};
+    if(codeDrag.source==='sequence'){
+      program.splice(codeDrag.idx,1);
+      const adjustedIdx=insertIdx>codeDrag.idx?insertIdx-1:insertIdx;
+      program.splice(adjustedIdx,0,newItem);
+    } else {
+      program.splice(insertIdx,0,newItem);
+    }
+    renderSequence();
+    tutHandleAction('blockAdded', codeDrag.btype);
+  }
+  codeDrag=null;
+});
+
+function getInsertIndex(mx,my){
+  const wrap=document.getElementById('sequence-wrap');
+  const wRect=wrap.getBoundingClientRect();
+  if(mx<wRect.left||mx>wRect.right||my<wRect.top||my>wRect.bottom) return null;
+  const blocks=Array.from(seqList.querySelectorAll('.seq-block'));
+  if(!blocks.length) return 0;
+  for(let i=0;i<blocks.length;i++){const r=blocks[i].getBoundingClientRect();if(mx<r.left+r.width/2) return i;}
+  return blocks.length;
+}
+
+let insertMarkerEl=null;
+function showInsertMarker(mx,my){
+  clearInsertMarker();
+  const idx=getInsertIndex(mx,my); if(idx===null) return;
+  insertMarkerEl=document.createElement('div');
+  insertMarkerEl.className='seq-insert-marker';
+  const blocks=Array.from(seqList.querySelectorAll('.seq-block'));
+  if(idx<blocks.length) seqList.insertBefore(insertMarkerEl,blocks[idx]);
+  else seqList.appendChild(insertMarkerEl);
+}
+function clearInsertMarker(){ if(insertMarkerEl){insertMarkerEl.remove();insertMarkerEl=null;} }
+
+rcClear.addEventListener('click',()=>{ if(progRunning) return; program.length=0; renderSequence(); updateProgStatus('IDLE'); });
+
+// ═══════════════════════════════════════════════════
+// PROGRAM EXECUTION
+// ═══════════════════════════════════════════════════
+function framesFor(item){
+  if(item.type==='forward'||item.type==='backward') return Math.ceil(item.param/SPD);
+  if(item.type==='turnleft'||item.type==='turnright') return Math.ceil(item.param/ROT);
+  if(item.type==='wait') return Math.ceil(item.param*60);
+  if(item.type==='repeat') return 1;
+  return 60;
+}
+function startProgram(){
+  if(!program.length){showOverlay('⚠️ Empty Program','Drag blocks into the sequence first.',2000);return;}
+  progRunning=true; progStepping=false;
+  progStep=0; progFrames=0; progRepeatCount=0; progTurnRotated=0;
+  const rep=program.find(b=>b.type==='repeat');
+  progRepeatTotal=rep?rep.param:0;
+  progFramesNeeded=framesFor(program[0]);
+  rcRun.textContent='⏹ Stop'; rcRun.classList.add('running');
+  rcStep.disabled=true; updateProgStatus('RUNNING'); renderSequence();
+}
+function stopProgram(){
+  progRunning=false; progStepping=false;
+  progStep=0; progFrames=0; progTurnRotated=0;
+  rcRun.textContent='▶ Run'; rcRun.classList.remove('running');
+  rcStep.disabled=false; updateProgStatus('IDLE'); renderSequence();
+}
+function stepOnce(){
+  if(!program.length) return; if(progRunning) return;
+  progStepping=true; progRunning=true;
+  if(progStep>=program.length) progStep=0;
+  progFrames=0; progTurnRotated=0;
+  progFramesNeeded=framesFor(program[progStep]);
+  updateProgStatus(`STEP ${progStep+1}/${program.length}`); renderSequence();
+}
+rcRun.addEventListener('click',()=>{ if(progRunning) stopProgram(); else startProgram(); });
+rcStep.addEventListener('click',stepOnce);
+
+function tickProgram(dt){
+  if(!progRunning) return;
+  if(progStep>=program.length){stopProgram();return;}
+  const item=program[progStep];
+  if(item.type==='repeat'){progStep++;progFrames=0;progTurnRotated=0;if(progStep>=program.length){stopProgram();return;}progFramesNeeded=framesFor(program[progStep]);renderSequence();return;}
+  progFrames+=dt; applyInstruction(item,dt);
+  if(progFrames>=progFramesNeeded){
+    progStep++; progFrames=0; progTurnRotated=0;
+    if(progStep>=program.length){
+      const rep=program.find(b=>b.type==='repeat'); progRepeatCount++;
+      if(rep&&progRepeatCount<rep.param){progStep=0;progFramesNeeded=framesFor(program[0]);progTurnRotated=0;}
+      else{stopProgram();return;}
+    } else { progFramesNeeded=framesFor(program[progStep]); }
+    if(progStepping){progRunning=false;progStepping=false;rcRun.textContent='▶ Run';rcRun.classList.remove('running');rcStep.disabled=false;updateProgStatus(`PAUSED @ step ${progStep}`);}
+    renderSequence();
+  }
+}
+function applyInstruction(item,dt){
+  const rad=robot.angle*Math.PI/180; let vx=0,vy=0;
+  if(item.type==='forward'){vx=Math.sin(rad)*SPD*dt;vy=-Math.cos(rad)*SPD*dt;}
+  else if(item.type==='backward'){vx=-Math.sin(rad)*SPD*dt;vy=Math.cos(rad)*SPD*dt;}
+  else if(item.type==='turnleft'||item.type==='turnright'){
+    const remaining=item.param-progTurnRotated,step=Math.min(ROT*dt,Math.max(0,remaining));
+    progTurnRotated+=step;
+    if(item.type==='turnleft') robot.angle-=step; else robot.angle+=step;
+    return;
+  } else if(item.type==='wait'){return;}
+  if(puzzle.ramp){const r=puzzle.ramp;if(robot.x>r.x&&robot.x<r.x+r.w&&robot.y<=r.lineY&&vy>0)vy=0;}
+  if(!collides(robot.x+vx,robot.y)) robot.x+=vx;
+  if(!collides(robot.x,robot.y+vy)) robot.y+=vy;
+  speed=SPD; trail.push({x:robot.x,y:robot.y}); if(trail.length>TRAIL_MAX) trail.shift();
+}
+function updateProgStatus(text){ progStatus.textContent=text; progStatus.className=progRunning?'running':''; }
+
+// ═══════════════════════════════════════════════════
+// READINGS PANEL
+// ═══════════════════════════════════════════════════
+function buildReadings(){
+  readingsCont.innerHTML='';
+  const seen=new Set();
+  for(const s of placedSensors){
+    if(seen.has(s.type)) continue; seen.add(s.type);
+    const c=document.createElement('div'); c.className=`reading-card ${s.type}`;
+    if(s.type==='proximity') c.innerHTML=`<div class="r-label">📏 Proximity</div><div class="r-value" id="r-prox">---</div><div class="r-unit">cm to obstacle</div><div class="r-bar"><div class="r-bar-fill" id="r-prox-bar" style="width:0%"></div></div>`;
+    else if(s.type==='motion') c.innerHTML=`<div class="r-label">📍 Motion</div><div class="r-value" id="r-spd">0.0</div><div class="r-unit">units/s</div><div class="r-sub" id="r-xy">X:--- Y:---</div><div class="r-bar"><div class="r-bar-fill" id="r-spd-bar" style="width:0%"></div></div>`;
+    else if(s.type==='vision') c.innerHTML=`<div class="r-label">👁️ Vision</div><div class="r-value" id="r-vis">0</div><div class="r-unit">objects in FOV</div><div class="r-sub" id="r-vis-sub">scanning…</div>`;
+    readingsCont.appendChild(c);
+  }
+  if(placedSensors.some(s=>s.type==='vision')){
+    const at=document.createElement('div'); at.className='reading-card apriltag';
+    at.innerHTML=`<div class="r-label">🏷️ AprilTag</div><div class="r-value" id="r-tag">—</div><div class="r-unit">tag in view</div><div class="r-sub" id="r-tag-sub">no tag detected</div><div class="r-bar"><div class="r-bar-fill" id="r-tag-bar" style="width:0%;background:#f97316"></div></div>`;
+    readingsCont.appendChild(at);
+  }
+  if(!placedSensors.length) readingsCont.innerHTML=`<div class="no-sensor-msg">No sensors placed.<br><span style="opacity:.7">Go back to Design Mode.</span></div>`;
+  const cc=document.createElement('div'); cc.id='r-challenge'; readingsCont.appendChild(cc); updateChallengeCard();
+}
+function updateReadings(proxDist,spd,visCount,seenTags){
+  const pe=document.getElementById('r-prox');
+  if(pe){pe.textContent=Math.round(proxDist*0.55);pe.style.color=proxDist<60?'#dc2626':proxDist<120?'#d97706':'#1a1a2e';const bar=document.getElementById('r-prox-bar');bar.style.width=`${Math.max(0,100-(proxDist/260)*100)}%`;bar.style.background=proxDist<60?'#dc2626':proxDist<120?'#d97706':'#219ebc';}
+  const se=document.getElementById('r-spd');
+  if(se){se.textContent=spd.toFixed(1);document.getElementById('r-xy').textContent=`X:${Math.round(robot.x)} Y:${Math.round(robot.y)}`;document.getElementById('r-spd-bar').style.width=`${Math.min(100,spd*18)}%`;}
+  const ve=document.getElementById('r-vis');
+  if(ve){ve.textContent=visCount;document.getElementById('r-vis-sub').textContent=visCount===0?'clear FOV':`${visCount} obj detected`;}
+  const te=document.getElementById('r-tag');
+  if(te){if(seenTags.length>0){te.textContent=seenTags[0].label;document.getElementById('r-tag-sub').textContent=`dist: ${Math.round(Math.hypot(seenTags[0].x-robot.x,seenTags[0].y-robot.y))}px`;document.getElementById('r-tag-bar').style.width='100%';}else{te.textContent='—';document.getElementById('r-tag-sub').textContent='no tag detected';document.getElementById('r-tag-bar').style.width='0%';}}
+}
+
+// ═══════════════════════════════════════════════════
+// DRAW APRIL TAG
+// ═══════════════════════════════════════════════════
+function drawAprilTag(t,isGoal){const{x,y,size,label,id}=t,hs=size/2,pulse=isGoal?(0.7+0.3*Math.sin(Date.now()/250)):1;ctx.save();ctx.translate(x,y);if(isGoal){ctx.shadowColor='#f97316';ctx.shadowBlur=18*pulse;}ctx.fillStyle='#fff';ctx.fillRect(-hs-3,-hs-3,size+6,size+6);ctx.fillStyle='#111';ctx.fillRect(-hs,-hs,size,size);const cell=size/5;ctx.fillStyle='#fff';ctx.fillRect(-hs+cell,-hs+cell,size-cell*2,size-cell*2);const pats=[[1,0,1,0,1,0,1,0,1],[1,1,0,0,1,1,0,1,0],[0,1,1,1,0,0,1,1,0],[1,0,0,1,1,0,0,0,1],[0,0,1,0,1,1,1,0,0]];const pat=pats[id%pats.length];for(let r=0;r<3;r++) for(let c=0;c<3;c++) if(pat[r*3+c]){ctx.fillStyle='#111';ctx.fillRect(-hs+cell+c*cell,-hs+cell+r*cell,cell,cell);}ctx.shadowBlur=0;ctx.fillStyle=isGoal?'#ea580c':'#64748b';ctx.font=`bold 9px 'Courier New',monospace`;ctx.textAlign='center';ctx.fillText(label,0,hs+11);if(isGoal){ctx.fillStyle='#ea580c';ctx.font=`bold 8px 'Segoe UI',sans-serif`;ctx.fillText('← GOAL',0,hs+21);}ctx.restore();}
+
+// ═══════════════════════════════════════════════════
+// UPDATE
+// ═══════════════════════════════════════════════════
+function update(dt){
+  if(overlay.classList.contains('show')&&challengeActive) return;
+  const hasVision=placedSensors.some(s=>s.type==='vision');
+  if(progRunning){tickProgram(dt);}
+  else{
+    const ROT_M=ROT,SPD_M=SPD;
+    if(keys.has('ArrowLeft')) robot.angle-=ROT_M*dt;
+    if(keys.has('ArrowRight')) robot.angle+=ROT_M*dt;
+    let dir=0;
+    if(keys.has('ArrowUp')) dir=1;
+    if(keys.has('ArrowDown')) dir=-1;
+    let vx=Math.sin(robot.angle*Math.PI/180)*SPD_M*dt*dir;
+    let vy=-Math.cos(robot.angle*Math.PI/180)*SPD_M*dt*dir;
+    if(puzzle.ramp){const r=puzzle.ramp;if(robot.x>r.x&&robot.x<r.x+r.w&&robot.y<=r.lineY&&vy>0)vy=0;}
+    if(!collides(robot.x+vx,robot.y)) robot.x+=vx;
+    if(!collides(robot.x,robot.y+vy)) robot.y+=vy;
+    speed=dir!==0?Math.abs(SPD_M*dir):Math.max(0,speed-0.5);
+    if(dir!==0){trail.push({x:robot.x,y:robot.y});if(trail.length>TRAIL_MAX)trail.shift();}
+  }
+  cachedVis=hasVision?visibleObs():[];
+  cachedTags=hasVision?visibleTags():[];
+  if(challengeActive){
+    const ci=Math.min(challengeIndex,puzzle.challenges.length-1);
+    const gt=puzzle.tags.find(t=>t.id===puzzle.challenges[ci].tagId);
+    if(gt&&Math.hypot(robot.x-gt.x,robot.y-gt.y)<34) winChallenge();
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// DRAW
+// ═══════════════════════════════════════════════════
+function draw(){
+  const MW=CANVAS_W,MH=CANVAS_H;
+  ctx.fillStyle='#eef2ff';ctx.fillRect(0,0,MW,MH);
+  if(puzzle.ramp){ctx.fillStyle='rgba(199,210,254,0.35)';ctx.fillRect(0,0,MW,puzzle.ramp.lineY);ctx.fillStyle='rgba(99,102,241,0.45)';ctx.font='bold 10px Courier New';ctx.textAlign='left';ctx.fillText('▲ UPPER ZONE',14,16);ctx.fillStyle='rgba(100,116,139,0.4)';ctx.fillText('▼ LOWER ZONE (START)',14,MH-8);}
+  ctx.strokeStyle='rgba(180,190,220,.5)';ctx.lineWidth=1;
+  for(let x=0;x<=MW;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,MH);ctx.stroke();}
+  for(let y=0;y<=MH;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(MW,y);ctx.stroke();}
+  for(const dz of puzzle.darkZones){ctx.save();ctx.fillStyle='rgba(15,23,42,0.28)';ctx.fillRect(dz.x,dz.y,dz.w,dz.h);ctx.strokeStyle='rgba(15,23,42,0.35)';ctx.lineWidth=1.5;ctx.strokeRect(dz.x,dz.y,dz.w,dz.h);ctx.beginPath();ctx.rect(dz.x,dz.y,dz.w,dz.h);ctx.clip();ctx.strokeStyle='rgba(15,23,42,0.10)';ctx.lineWidth=1;for(let i=-dz.h;i<dz.w;i+=14){ctx.beginPath();ctx.moveTo(dz.x+i,dz.y);ctx.lineTo(dz.x+i+dz.h,dz.y+dz.h);ctx.stroke();}ctx.restore();ctx.fillStyle='rgba(148,163,184,0.8)';ctx.font='bold 10px Courier New';ctx.textAlign='left';ctx.fillText('⚠ LOW LIGHT',dz.x+5,dz.y+14);}
+  for(const o of puzzle.obs){ctx.fillStyle='#c8d4e8';ctx.strokeStyle='#94a3b8';ctx.lineWidth=1.5;ctx.fillRect(o.x,o.y,o.w,o.h);ctx.strokeRect(o.x,o.y,o.w,o.h);ctx.fillStyle='#e2e8f0';ctx.fillRect(o.x+1,o.y,o.w-2,2);}
+  if(puzzle.ramp){const r=puzzle.ramp;ctx.fillStyle='#fef3c7';ctx.fillRect(r.x,r.y-2,r.w,14);ctx.save();ctx.beginPath();ctx.rect(r.x,r.y-2,r.w,14);ctx.clip();ctx.strokeStyle='rgba(217,119,6,0.45)';ctx.lineWidth=2;for(let i=-14;i<r.w+14;i+=10){ctx.beginPath();ctx.moveTo(r.x+i,r.y-2);ctx.lineTo(r.x+i+14,r.y+12);ctx.stroke();}ctx.restore();ctx.strokeStyle='#d97706';ctx.lineWidth=1.5;ctx.strokeRect(r.x,r.y-2,r.w,14);ctx.fillStyle='#92400e';ctx.font='bold 11px Segoe UI';ctx.textAlign='center';ctx.fillText('▲ ▲ ▲',r.x+r.w/2,r.y+7);ctx.fillStyle='#92400e';ctx.font='bold 9px Courier New';ctx.fillText('ONE WAY',r.x+r.w/2,r.y-6);}
+  const hasMotion=placedSensors.some(s=>s.type==='motion'),hasProx=placedSensors.some(s=>s.type==='proximity'),hasVision=placedSensors.some(s=>s.type==='vision');
+  if(hasMotion&&trail.length>1){for(let i=1;i<trail.length;i++){const a=(i/trail.length)*0.6;ctx.strokeStyle=`rgba(217,119,6,${a})`;ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(trail[i-1].x,trail[i-1].y);ctx.lineTo(trail[i].x,trail[i].y);ctx.stroke();}}
+  if(hasVision){const fovRad=FOV_DEG*Math.PI/180,fwdAngle=(robot.angle-90)*Math.PI/180,range=camRangeAt(robot.x,robot.y);ctx.save();ctx.globalAlpha=0.12;ctx.fillStyle='#9333ea';ctx.beginPath();ctx.moveTo(robot.x,robot.y);ctx.arc(robot.x,robot.y,range,fwdAngle-fovRad,fwdAngle+fovRad);ctx.closePath();ctx.fill();ctx.globalAlpha=0.28;ctx.strokeStyle='#9333ea';ctx.lineWidth=1;ctx.stroke();ctx.globalAlpha=0.15;ctx.fillStyle='#9333ea';for(const o of cachedVis)ctx.fillRect(o.x,o.y,o.w,o.h);ctx.restore();const ci=Math.min(challengeIndex,puzzle.challenges.length-1);for(const t of cachedTags)drawAprilTag(t,challengeActive&&t.id===puzzle.challenges[ci].tagId);}
+  let proxDist=260;
+  if(hasProx){proxDist=castRay(robot.x,robot.y,robot.angle);const endX=robot.x+Math.sin(robot.angle*Math.PI/180)*proxDist,endY=robot.y-Math.cos(robot.angle*Math.PI/180)*proxDist,col=proxDist<60?'#dc2626':proxDist<120?'#d97706':'#219ebc';ctx.save();ctx.strokeStyle=col;ctx.lineWidth=1.5;ctx.setLineDash([6,5]);ctx.globalAlpha=0.8;ctx.beginPath();ctx.moveTo(robot.x,robot.y);ctx.lineTo(endX,endY);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;ctx.fillStyle=col;ctx.beginPath();ctx.arc(endX,endY,4,0,Math.PI*2);ctx.fill();ctx.restore();}
+  const hw=24,hh=28;ctx.save();ctx.translate(robot.x,robot.y);ctx.rotate(robot.angle*Math.PI/180);
+  ctx.fillStyle='#64748b';ctx.strokeStyle='#94a3b8';ctx.lineWidth=1;
+  [[-hw-9,-hh+6],[-hw-9,hh-26],[hw-1,-hh+6],[hw-1,hh-26]].forEach(([wx,wy])=>{ctx.fillRect(wx,wy,10,20);ctx.strokeRect(wx,wy,10,20);});
+  ctx.fillStyle='#dde6f5';ctx.strokeStyle='#94a3b8';ctx.lineWidth=2;ctx.shadowColor='rgba(0,0,0,.10)';ctx.shadowBlur=8;ctx.beginPath();if(ctx.roundRect)ctx.roundRect(-hw,-hh,hw*2,hh*2,6);else ctx.rect(-hw,-hh,hw*2,hh*2);ctx.fill();ctx.stroke();ctx.shadowBlur=0;
+  ctx.fillStyle='#0b5ed7';ctx.fillRect(-hw+8,-hh,hw*2-16,4);
+  if(progRunning){ctx.strokeStyle='#facc15';ctx.lineWidth=2.5;ctx.globalAlpha=0.7;ctx.beginPath();if(ctx.roundRect)ctx.roundRect(-hw-2,-hh-2,hw*2+4,hh*2+4,7);else ctx.rect(-hw-2,-hh-2,hw*2+4,hh*2+4);ctx.stroke();ctx.globalAlpha=1;}
+  ctx.fillStyle='rgba(0,0,0,.12)';ctx.beginPath();ctx.arc(0,0,4,0,Math.PI*2);ctx.fill();
+  for(const s of placedSensors){const sx=(s.relX-.5)*hw*2,sy=(s.relY-.5)*hh*2;ctx.fillStyle=COLORS[s.type];ctx.strokeStyle='rgba(255,255,255,.7)';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(sx,sy,5,0,Math.PI*2);ctx.fill();ctx.stroke();}
+  ctx.restore();
+  updateReadings(proxDist,speed,cachedVis.length,cachedTags);
+  if(challengeActive) updateChallengeCard();
+}
+
+// ═══════════════════════════════════════════════════
+// LOOP
+// ═══════════════════════════════════════════════════
+function startLoop(){
+  loopActive=true; lastT=performance.now();
+  function loop(now){
+    if(!loopActive) return;
+    const dt=Math.min((now-lastT)/16.67,3); lastT=now;
+    update(dt); draw(); animRef=requestAnimationFrame(loop);
+  }
+  animRef=requestAnimationFrame(loop);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ╔═══════════════════════════════════════════════════════════╗
+// ║         INTERACTIVE SPOTLIGHT TUTORIAL SYSTEM            ║
+// ╚═══════════════════════════════════════════════════════════╝
+// ═══════════════════════════════════════════════════════════════
+
+const tutTooltip      = document.getElementById('tut-tooltip');
+const tutCurtainSvg   = document.getElementById('tut-curtain-svg');
+const tutHoleRect     = document.getElementById('tut-hole-rect');
+const tutRing         = document.getElementById('tut-ring');
+const tutTtStep       = document.getElementById('tut-tt-step');
+const tutTtTitle      = document.getElementById('tut-tt-title');
+const tutTtIcon       = document.getElementById('tut-tt-icon');
+const tutTtBody       = document.getElementById('tut-tt-body');
+const tutTtPrev       = document.getElementById('tut-tt-prev');
+const tutTtNext       = document.getElementById('tut-tt-next');
+const tutTtSkip       = document.getElementById('tut-tt-skip');
+const tutProgressFill = document.getElementById('tut-tt-progress-fill');
+
+let tutActive    = false;
+let tutStepIndex = 0;
+// Track which actions have been completed in the current session
+const tutCompleted = new Set();
+
+/*
+  Each step has:
+    id         — unique identifier
+    icon       — emoji
+    title      — headline
+    body       — HTML string
+    target     — CSS selector of element to spotlight (null = centre modal)
+    arrow      — tooltip arrow direction: top | bottom | left | right | none
+    waitFor    — action id that auto-advances this step (null = show Next button freely)
+    actionHint — short string shown in the "waiting" button label
+    side       — which side of the target to place tooltip: top|bottom|left|right|center
+    requireMode— 'design' | 'sim' | null (if set, step only makes sense in that mode)
+    pad        — extra spotlight padding (default 10)
+*/
+const TUT_STEPS = [
+  {
+    id: 'welcome',
+    icon: '🤖',
+    title: 'Welcome to Robot Sensor Game!',
+    body: `Design a robot, equip sensors, and write a program to find hidden tags — all under a strict hardware budget.<br><br>This guide will walk you through each part of the interface <strong>step by step</strong>. Click elements when prompted, and the tutorial will advance automatically.`,
+    target: null,
+    arrow: 'none',
+    side: 'center',
+    waitFor: null,
+  },
+  {
+    id: 'sensor-library',
+    icon: '📦',
+    title: 'The Sensor Library',
+    body: `The right panel is your <strong>Sensor Library</strong>. Each sensor has a slot cost and unique ability.<br><br><b>📍 Motion (1cr)</b> — tracks speed and draws a trail<br><b>📏 Proximity (2cr)</b> — IR beam measures obstacle distance<br><b>👁️ Vision (3cr)</b> — detects AprilTag targets in a FOV cone`,
+    target: '.sensor-sidebar',
+    arrow: 'right',
+    side: 'left',
+    waitFor: null,
+    pad: 6,
+  },
+  {
+    id: 'budget',
+    icon: '💰',
+    title: 'Watch the Budget',
+    body: `Every level has a <strong>credit limit</strong> and a <strong>slot limit</strong>. The bar shows how much you've spent.<br><br>It turns <span style="color:#d97706;font-weight:700">amber</span> when crowded and <span style="color:#dc2626;font-weight:700">red</span> when full. You can't exceed the budget!`,
+    target: '#budget-bar-wrap',
+    arrow: 'right',
+    side: 'left',
+    waitFor: null,
+    pad: 8,
+  },
+  {
+    id: 'drag-sensor',
+    icon: '🖱️',
+    title: 'Drag a Sensor onto the Robot',
+    body: `Now try it! <strong>Drag any sensor card</strong> from the list and drop it onto the robot body in the centre.<br><br>A coloured dot will appear where you placed it.
+    <div class="tut-action"><span class="act-icon">👆</span><span>Drag a sensor card → drop it on the robot body</span></div>`,
+    target: '.sensor-card.motion',
+    arrow: 'right',
+    side: 'left',
+    waitFor: 'sensorPlaced',
+    actionHint: 'waiting for sensor drop…',
+    pad: 8,
+  },
+  {
+    id: 'sensor-placed-confirm',
+    icon: '✅',
+    title: 'Sensor Placed!',
+    body: `The dot on the robot shows where you installed the sensor. The budget bar updated too.<br><br>You can place <strong>multiple sensors</strong> (one of each type, within budget). The robot uses whichever types are installed during simulation.`,
+    target: '#design-robot-body',
+    arrow: 'left',
+    side: 'right',
+    waitFor: null,
+    pad: 20,
+  },
+  {
+    id: 'go-sim',
+    icon: '🚀',
+    title: 'Enter the Simulation',
+    body: `Ready to test your robot? Click <strong>▶ Run</strong> to enter the arena.<br><br>You'll be able to drive manually and watch your sensor readings update in real time.
+    <div class="tut-action"><span class="act-icon">👆</span><span>Click the ▶ Run button</span></div>`,
+    target: '#go-sim-btn',
+    arrow: 'bottom',
+    side: 'top',
+    waitFor: 'switchSim',
+    actionHint: 'waiting for ▶ Run…',
+    pad: 8,
+  },
+  {
+    id: 'arena',
+    icon: '🗺️',
+    title: 'The Arena',
+    body: `This is the simulation arena. Your robot spawns in the centre. <strong>Walls</strong> are solid — the robot can't pass through them.<br><br>Dark shaded zones cut your camera range (if you have Vision equipped). The coloured beam ahead is your Proximity sensor.`,
+    target: '#sim-canvas',
+    arrow: 'right',
+    side: 'left',
+    waitFor: null,
+    pad: 4,
+  },
+  {
+    id: 'drive',
+    icon: '🕹️',
+    title: 'Drive the Robot',
+    body: `Try the arrow keys! <kbd style="background:#f0f4f8;padding:1px 6px;border:1px solid #d0d0d8;border-radius:4px">↑↓</kbd> to drive forward/back, <kbd style="background:#f0f4f8;padding:1px 6px;border:1px solid #d0d0d8;border-radius:4px">←→</kbd> to rotate.<br><br>Watch the <strong>sensor readings</strong> panel on the right update as you move!
+    <div class="tut-action"><span class="act-icon">⌨️</span><span>Press any arrow key to drive</span></div>`,
+    target: '#sim-canvas',
+    arrow: 'right',
+    side: 'left',
+    waitFor: 'usedArrows',
+    actionHint: 'waiting for arrow key…',
+    pad: 4,
+  },
+  {
+    id: 'readings',
+    icon: '📊',
+    title: 'Sensor Readings Panel',
+    body: `This panel shows live data from your installed sensors.<br><br>• <b>Proximity</b> — distance to the closest obstacle ahead (turns red when close)<br>• <b>Motion</b> — current speed and X/Y coordinates<br>• <b>Vision</b> — objects detected + any AprilTag IDs in view`,
+    target: '.readings-panel',
+    arrow: 'right',
+    side: 'left',
+    waitFor: null,
+    pad: 4,
+  },
+  {
+    id: 'code-panel',
+    icon: '⌨️',
+    title: 'The Code Panel',
+    body: `The dark panel at the bottom is where you program the robot. <strong>Drag a block</strong> from the left palette into the sequence area to build a movement program.
+    <div class="tut-action"><span class="act-icon">👆</span><span>Drag a block from the palette into the sequence</span></div>`,
+    target: '#code-panel',
+    arrow: 'top',
+    side: 'bottom',
+    waitFor: 'blockAdded',
+    actionHint: 'waiting for block drag…',
+    pad: 6,
+  },
+  {
+    id: 'run-program',
+    icon: '▶️',
+    title: 'Run Your Program',
+    body: `Click <strong>▶ Run</strong> in the code panel controls to execute the sequence. The active block glows yellow as it runs.<br><br>Use <strong>⏭ Step</strong> to run one block at a time — great for debugging. Click <strong>⏹ Stop</strong> to halt.`,
+    target: '#run-controls',
+    arrow: 'top',
+    side: 'bottom',
+    waitFor: null,
+    pad: 8,
+  },
+  {
+    id: 'puzzle',
+    icon: '🎯',
+    title: 'Start a Timed Puzzle',
+    body: `When you're ready for a challenge, click <strong>🎯 Start Puzzle</strong>. A countdown starts and your program runs automatically — arrow keys are locked.<br><br>Find the <strong>flashing AprilTag</strong> before time runs out. You need the Vision sensor to see it!`,
+    target: '#challenge-btn',
+    arrow: 'right',
+    side: 'left',
+    waitFor: null,
+    pad: 8,
+  },
+  {
+    id: 'finish',
+    icon: '🏆',
+    title: "You're Ready!",
+    body: `That's the full tour. Here's a quick reminder:<br><br>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px;font-size:12px">
+        <div>1️⃣ <b>Design</b> — equip sensors within budget</div>
+        <div>2️⃣ <b>Simulate</b> — explore the arena, check readings</div>
+        <div>3️⃣ <b>Code Panel</b> — build a program with drag blocks</div>
+        <div>4️⃣ <b>Start Puzzle</b> — reach the flashing tag in time</div>
+        <div>5️⃣ <b>Leaderboard</b> — save your best time!</div>
+      </div>`,
+    target: null,
+    arrow: 'none',
+    side: 'center',
+    waitFor: null,
+  },
+];
+
+// ── Spotlight positioning ──────────────────────────
+function tutGetTargetRect(selector) {
+  if (!selector) return null;
+  const el = document.querySelector(selector);
+  if (!el) return null;
+  // Check visibility
+  const style = window.getComputedStyle(el);
+  if (style.display === 'none' || style.visibility === 'hidden') return null;
+  return el.getBoundingClientRect();
+}
+
+function tutPositionSpotlight(rect, pad = 10) {
+  const p = pad;
+  const x = rect.left - p, y = rect.top - p;
+  const w = rect.width  + p*2, h = rect.height + p*2;
+  const r = 12;
+
+  // Update SVG hole
+  tutHoleRect.setAttribute('x', x);
+  tutHoleRect.setAttribute('y', y);
+  tutHoleRect.setAttribute('width',  w);
+  tutHoleRect.setAttribute('height', h);
+  tutHoleRect.setAttribute('rx', r);
+
+  // Update ring
+  tutRing.style.left   = x + 'px';
+  tutRing.style.top    = y + 'px';
+  tutRing.style.width  = w + 'px';
+  tutRing.style.height = h + 'px';
+  tutRing.style.borderRadius = r + 'px';
+  tutRing.classList.add('show');
+}
+
+function tutClearSpotlight() {
+  tutHoleRect.setAttribute('width', 0);
+  tutHoleRect.setAttribute('height', 0);
+  tutRing.classList.remove('show');
+}
+
+// ── Tooltip positioning ────────────────────────────
+const TT_PAD = 16; // gap between target and tooltip
+
+function tutPositionTooltip(step) {
+  tutTooltip.removeAttribute('style');
+  const tRect = step.target ? tutGetTargetRect(step.target) : null;
+  const tw    = 320; // tooltip width (fixed by CSS)
+  const vw    = window.innerWidth;
+  const vh    = window.innerHeight;
+  // Re-measure tooltip height after content render
+  const th    = tutTooltip.offsetHeight || 260;
+
+  if (!tRect || step.side === 'center') {
+    // Centre on screen
+    tutTooltip.style.left = Math.max(8, (vw - tw) / 2) + 'px';
+    tutTooltip.style.top  = Math.max(8, (vh - th) / 2) + 'px';
+    tutTooltip.dataset.arrow = 'none';
+    return;
+  }
+
+  let left, top;
+  const side = step.side || 'right';
+
+  if (side === 'left') {
+    left = tRect.left - tw - TT_PAD;
+    top  = tRect.top + (tRect.height - th) / 2;
+    tutTooltip.dataset.arrow = 'right';
+  } else if (side === 'right') {
+    left = tRect.right + TT_PAD;
+    top  = tRect.top + (tRect.height - th) / 2;
+    tutTooltip.dataset.arrow = 'left';
+  } else if (side === 'top') {
+    left = tRect.left + (tRect.width - tw) / 2;
+    top  = tRect.top - th - TT_PAD;
+    tutTooltip.dataset.arrow = 'bottom';
+  } else if (side === 'bottom') {
+    left = tRect.left + (tRect.width - tw) / 2;
+    top  = tRect.bottom + TT_PAD;
+    tutTooltip.dataset.arrow = 'top';
+  }
+
+  // Clamp to viewport
+  left = Math.max(8, Math.min(left, vw - tw - 8));
+  top  = Math.max(8, Math.min(top,  vh - th - 8));
+
+  tutTooltip.style.left = left + 'px';
+  tutTooltip.style.top  = top  + 'px';
+}
+
+// ── Render step ────────────────────────────────────
+function tutRender() {
+  if (!tutActive) return;
+
+  const step  = TUT_STEPS[tutStepIndex];
+  const total = TUT_STEPS.length;
+  const pct   = ((tutStepIndex + 1) / total) * 100;
+
+  // Header
+  tutTtIcon.textContent  = step.icon;
+  tutTtStep.textContent  = `Step ${tutStepIndex + 1} of ${total}`;
+  tutTtTitle.textContent = step.title;
+  tutTtBody.innerHTML    = step.body;
+  tutProgressFill.style.width = pct + '%';
+
+  // Prev button
+  tutTtPrev.disabled = (tutStepIndex === 0);
+
+  // Next / waiting button
+  const isLast   = tutStepIndex === total - 1;
+  const alreadyDone = step.waitFor && tutCompleted.has(step.waitFor);
+  const canAdvance  = !step.waitFor || alreadyDone;
+
+  if (isLast) {
+    tutTtNext.textContent = "🚀 Let's Play!";
+    tutTtNext.className   = 'finish';
+  } else if (!canAdvance) {
+    tutTtNext.textContent = step.actionHint || 'Complete the action above…';
+    tutTtNext.className   = 'waiting';
+  } else {
+    tutTtNext.textContent = 'Next →';
+    tutTtNext.className   = '';
+  }
+
+  // Show tooltip
+  tutTooltip.classList.add('show');
+
+  // Spotlight
+  const tRect = step.target ? tutGetTargetRect(step.target) : null;
+  if (tRect) {
+    tutCurtainSvg.classList.add('show');
+    tutPositionSpotlight(tRect, step.pad || 10);
+  } else {
+    tutCurtainSvg.classList.add('show');
+    tutClearSpotlight();
+    // Full dark overlay with no hole when no target
+    tutHoleRect.setAttribute('width', 0);
+    tutHoleRect.setAttribute('height', 0);
+  }
+
+  // Position tooltip after a microtask so offsetHeight is correct
+  requestAnimationFrame(() => tutPositionTooltip(step));
+}
+
+function tutNext() {
+  if (!tutActive) return;
+  const step      = TUT_STEPS[tutStepIndex];
+  const isLast    = tutStepIndex === TUT_STEPS.length - 1;
+  const alreadyDone = step.waitFor && tutCompleted.has(step.waitFor);
+  const canAdvance  = !step.waitFor || alreadyDone;
+
+  if (isLast) { tutClose(); return; }
+  if (!canAdvance) return; // blocked — must perform the action
+
+  tutStepIndex++;
+  tutRender();
+}
+
+function tutPrev() {
+  if (!tutActive || tutStepIndex === 0) return;
+  tutStepIndex--;
+  tutRender();
+}
+
+function tutClose() {
+  tutActive = false;
+  tutTooltip.classList.remove('show');
+  tutCurtainSvg.classList.remove('show');
+  tutRing.classList.remove('show');
+  try { localStorage.setItem(TUT_KEY, '1'); } catch(e){}
+}
+
+function tutOpen(resetToStart) {
+  tutActive = true;
+  if (resetToStart) tutStepIndex = 0;
+  tutRender();
+}
+
+// ── Action hook — called from game events ──────────
+function tutHandleAction(actionId, payload) {
+  if (!tutActive) return;
+  tutCompleted.add(actionId);
+
+  const step = TUT_STEPS[tutStepIndex];
+  if (step.waitFor === actionId) {
+    // Flash confirmation, then advance
+    tutTtNext.textContent = '✓ Done! Advancing…';
+    tutTtNext.className   = 'tut-step-done';
+    setTimeout(() => {
+      tutStepIndex++;
+      tutRender();
+    }, 600);
+  }
+}
+
+// ── Button wiring ──────────────────────────────────
+tutTtNext.addEventListener('click', tutNext);
+tutTtPrev.addEventListener('click', tutPrev);
+tutTtSkip.addEventListener('click', tutClose);
+document.getElementById('tut-help-btn').addEventListener('click', () => tutOpen(true));
+
+// Reposition on resize
+window.addEventListener('resize', () => {
+  if (tutActive) tutRender();
+});
+
+// ── Auto-show on first visit ───────────────────────
+function tutMaybeShow() {
+  try { if (!localStorage.getItem(TUT_KEY)) tutOpen(true); }
+  catch(e) { tutOpen(true); }
+}
+
+// ═══════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════
+updatePuzzleInfo(); updateBudgetUI(); setMode('design'); renderSequence(); tutMaybeShow();
+</script>
+</body>
+</html>
