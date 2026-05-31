@@ -1097,7 +1097,7 @@ document.addEventListener('mouseup',e=>{
     dot.textContent={motion:'📍',proximity:'📏',vision:'👁'}[sensorDrag.type]||'•';
     robotBody.appendChild(dot);
     updateBudgetUI();
-    instr.textContent=`✓ "${sensorDrag.name}" placed. Budget: ${placedSensors.reduce((a,s)=>a+s.cost,0)}cr`;
+    instr.textContent=`✓ "${sensorDrag.name}" placed. Budget: ${placedSensors.reduce((a,s)=>a+s.cost,0)}credits used`;
     tutHandleAction('sensorPlaced', sensorDrag.type);
   } else {
     const used=placedSensors.reduce((a,s)=>a+SENSOR_COSTS[s.type],0);
@@ -1169,7 +1169,7 @@ function updateChallengeCard(){
   if(hint) hint.textContent=challengeActive?'⛔ Arrow keys locked — program is running':'or use the Code Panel below';
   if(!challengeActive){
     card.className='reading-card constraint';
-    card.innerHTML=`<div class="r-label" style="color:#15803d">🎯 Puzzle Goal${hasPending?'<span class="lb-pending-badge">Score ready!</span>':''}</div><div style="font-size:11px;color:var(--dim);margin-top:4px;line-height:1.5">Find <strong>AT#${c.tagId}</strong> in <strong>${c.timeLimit}s</strong><br>Budget: ${placedSensors.reduce((a,s)=>a+s.cost,0)} / ${puzzle.creditLimit}cr<br><em style="font-size:10px;opacity:.8">${puzzle.constraint}</em></div>`;
+    card.innerHTML=`<div class="r-label" style="color:#15803d">🎯 Puzzle Goal${hasPending?'<span class="lb-pending-badge">Score ready!</span>':''}</div><div style="font-size:11px;color:var(--dim);margin-top:4px;line-height:1.5">Find <strong>AT#${c.tagId}</strong> in <strong>${c.timeLimit}s</strong><br>Budget: ${placedSensors.reduce((a,s)=>a+s.cost,0)} / ${puzzle.creditLimit}credits used<br><em style="font-size:10px;opacity:.8">${puzzle.constraint}</em></div>`;
   } else {
     card.className='reading-card constraint active-c';
     card.innerHTML=`<div class="r-label" style="color:#1d4ed8">🎯 ${c.name}</div><div style="font-size:11px;color:var(--dim);margin-top:4px;line-height:1.5">Find <strong>AT#${c.tagId}</strong><br>Time: <strong style="font-family:'Courier New';color:${challengeTimeLeft<=8?'#dc2626':'#1d4ed8'}">${challengeTimeLeft}s</strong><br><span style="font-size:10px;opacity:.7">⌨ Keys locked · auto-program running</span></div>`;
