@@ -1400,8 +1400,8 @@ function buildReadings(){
     readingsCont.appendChild(c);
   }
   if(placedSensors.some(s=>s.type==='vision')){
-    const at=document.createElement('div'); at.className='reading-card apriltag';
-    at.innerHTML=`<div class="r-label">🏷️ AprilTag</div><div class="r-value" id="r-tag">—</div><div class="r-unit">tag in view</div><div class="r-sub" id="r-tag-sub">no tag detected</div><div class="r-bar"><div class="r-bar-fill" id="r-tag-bar" style="width:0%;background:#f97316"></div></div>`;
+    const at=document.createElement('div'); at.className='reading-card Hidden Tag';
+    at.innerHTML=`<div class="r-label">🏷️ Hidden Tag</div><div class="r-value" id="r-tag">—</div><div class="r-unit">tag in view</div><div class="r-sub" id="r-tag-sub">no tag detected</div><div class="r-bar"><div class="r-bar-fill" id="r-tag-bar" style="width:0%;background:#f97316"></div></div>`;
     readingsCont.appendChild(at);
   }
   if(!placedSensors.length) readingsCont.innerHTML=`<div class="no-sensor-msg">No sensors placed.<br><span style="opacity:.7">Go back to Design Mode.</span></div>`;
@@ -1551,7 +1551,7 @@ const TUT_STEPS = [
     id: 'sensor-library',
     icon: '📦',
     title: 'The Sensor Library',
-    body: `The right panel is your <strong>Sensor Library</strong>. Each sensor has a slot cost and unique ability.<br><br><b>📍 Motion (1cr)</b> — tracks speed and draws a trail<br><b>📏 Proximity (2cr)</b> — IR beam measures obstacle distance<br><b>👁️ Vision (3cr)</b> — detects AprilTag targets in a FOV cone`,
+    body: `The right panel is your <strong>Sensor Library</strong>. Each sensor has a slot cost and unique ability.<br><br><b>📍 Motion (1credit)</b> — tracks speed and draws a trail<br><b>📏 Proximity (2credit)</b> — IR beam measures obstacle distance<br><b>👁️ Vision (3credit)</b> — detects Hidden Tags targets in a Field of View (FOV) cone`,
     target: '.sensor-sidebar',
     arrow: 'right',
     side: 'left',
@@ -1634,7 +1634,7 @@ const TUT_STEPS = [
     id: 'readings',
     icon: '📊',
     title: 'Sensor Readings Panel',
-    body: `This panel shows live data from your installed sensors.<br><br>• <b>Proximity</b> — distance to the closest obstacle ahead (turns red when close)<br>• <b>Motion</b> — current speed and X/Y coordinates<br>• <b>Vision</b> — objects detected + any AprilTag IDs in view`,
+    body: `This panel shows live data from your installed sensors.<br><br>• <b>Proximity</b> — distance to the closest obstacle ahead (turns red when close)<br>• <b>Motion</b> — current speed and X/Y coordinates<br>• <b>Vision</b> — objects detected + any Hidden Tag in view`,
     target: '.readings-panel',
     arrow: 'right',
     side: 'left',
@@ -1669,7 +1669,7 @@ const TUT_STEPS = [
     id: 'puzzle',
     icon: '🎯',
     title: 'Start a Timed Puzzle',
-    body: `When you're ready for a challenge, click <strong>🎯 Start Puzzle</strong>. A countdown starts and your program runs automatically — arrow keys are locked.<br><br>Find the <strong>flashing AprilTag</strong> before time runs out. You need the Vision sensor to see it!`,
+    body: `When you're ready for a challenge, click <strong>🎯 Start Puzzle</strong>. A countdown starts and your program runs automatically — arrow keys are locked.<br><br>Find the <strong>flashing Hidden Tag</strong> before time runs out. You need the Vision sensor to see it!`,
     target: '#challenge-btn',
     arrow: 'right',
     side: 'left',
