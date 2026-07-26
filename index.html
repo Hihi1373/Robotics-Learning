@@ -538,7 +538,8 @@ header { display:flex; align-items:center; justify-content:space-between; paddin
 </style>
 </head>
 <body>
-
+  <audio id="robotMoveSound" src="Mecha TURN ON - OFF 10.wav" loop preload="auto"></audio>
+  <audio id="tagDiscoverySound" src="Mecha LASER BEAM SHORT 8.wav" preload="auto"></audio>
 <header>
   <div class="header-left">
     <div class="header-title">Robot Sensor Game</div>
@@ -711,6 +712,87 @@ header { display:flex; align-items:center; justify-content:space-between; paddin
 </div>
 
 <script>
+// ── 1. AUDIO ELEMENTS & VARIABLES ─────────────────────────────
+const robotSound = document.getElementById('robotMoveSound');
+const tagSound = document.getElementById('tagDiscoverySound');
+
+let isMovingSoundActive = false;
+let activeMovementKeys = new Set(); // Tracks currently held keys
+const discoveredTagSet = new Set(); // Prevents sound spam for the same tag
+
+// Loop movement sound seamlessly (from 0.5s to 1.0s)
+if (robotSound) {
+  robotSound.addEventListener('timeupdate', () => {
+    if (robotSound.currentTime >= 1.0) {
+      robotSound.currentTime = 0.5;
+    }
+  });
+}
+
+
+// ── 2. MOVEMENT AUDIO CONTROLS ─────────────────────────────────
+function startRobotSound() {
+  if (robotSound && !isMovingSoundActive) {
+    isMovingSoundActive = true;
+    robotSound.currentTime = 0.5;
+    robotSound.play().catch(err => {
+      console.log('Audio playback waiting for interaction:', err);
+    });
+  }
+}
+
+function stopRobotSound() {
+  if (robotSound && isMovingSoundActive) {
+    isMovingSoundActive = false;
+    robotSound.pause();
+    robotSound.currentTime = 0.5;
+  }
+}
+
+// ── 3. TAG DISCOVERY AUDIO CONTROL ─────────────────────────────
+function playTagDiscoveredSound() {
+  if (tagSound) {
+    tagSound.currentTime = 0;
+    tagSound.play().catch(err => {
+      console.log('Tag sound blocked:', err);
+    });
+  }
+}
+
+// Call this function inside your AprilTag sensor detection logic
+function triggerTagSensorSound(tagId) {
+  if (tagId !== undefined && tagId !== null && !discoveredTagSet.has(tagId)) {
+    discoveredTagSet.add(tagId);
+    playTagDiscoveredSound();
+  }
+}
+
+// ── 4. KEYBOARD EVENT LISTENERS (FIXES OS REPEAT DELAY) ────────
+const MOVE_KEYS = [
+  'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
+  'w', 'W', 's', 'S', 'a', 'A', 'd', 'D'
+];
+
+window.addEventListener('keydown', (e) => {
+  // Ignore automatic OS key repeats so sound doesn't restart/stutter
+  if (e.repeat) return;
+
+  if (MOVE_KEYS.includes(e.key)) {
+    activeMovementKeys.add(e.key);
+    startRobotSound();
+  }
+});
+
+window.addEventListener('keyup', (e) => {
+  if (MOVE_KEYS.includes(e.key)) {
+    activeMovementKeys.delete(e.key);
+    
+    // Only stop sound if ALL movement keys are released
+    if (activeMovementKeys.size === 0) {
+      stopRobotSound();
+    }
+  }
+});
 // ═══════════════════════════════════════════════════
 // CONSTANTS
 // ═══════════════════════════════════════════════════
@@ -1403,6 +1485,7 @@ function buildReadings(){
     const at=document.createElement('div'); at.className='reading-card Hidden Tag';
     at.innerHTML=`<div class="r-label">🏷️ Hidden Tag</div><div class="r-value" id="r-tag">—</div><div class="r-unit">tag in view</div><div class="r-sub" id="r-tag-sub">no tag detected</div><div class="r-bar"><div class="r-bar-fill" id="r-tag-bar" style="width:0%;background:#f97316"></div></div>`;
     readingsCont.appendChild(at);
+    
   }
   if(!placedSensors.length) readingsCont.innerHTML=`<div class="no-sensor-msg">No sensors placed.<br><span style="opacity:.7">Go back to Design Mode.</span></div>`;
   const cc=document.createElement('div'); cc.id='r-challenge'; readingsCont.appendChild(cc); updateChallengeCard();
@@ -1451,6 +1534,7 @@ function update(dt){
     const ci=Math.min(challengeIndex,puzzle.challenges.length-1);
     const gt=puzzle.tags.find(t=>t.id===puzzle.challenges[ci].tagId);
     if(gt&&Math.hypot(robot.x-gt.x,robot.y-gt.y)<34) winChallenge();
+    
   }
 }
 
