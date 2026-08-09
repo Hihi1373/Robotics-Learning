@@ -155,6 +155,26 @@ header { display:flex; align-items:center; justify-content:space-between; paddin
 #overlay-title { font-size:20px; font-weight:700; margin-bottom:6px; }
 #overlay-body  { font-size:12px; color:var(--dim); line-height:1.55; }
 
+/* ── GOAL SPEECH BUBBLE ── */
+#goal-bubble {
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%) scale(.96);
+  background:#fff; border:2px solid var(--blue); border-radius:16px;
+  padding:16px 36px 16px 18px; max-width:340px; text-align:left;
+  box-shadow:0 10px 34px rgba(11,94,215,.22);
+  display:flex; align-items:flex-start; gap:10px;
+  opacity:0; pointer-events:none; z-index:16;
+  transition:opacity .2s ease, transform .2s ease;
+}
+#goal-bubble.show { opacity:1; transform:translate(-50%,-50%) scale(1); pointer-events:auto; }
+#goal-bubble-icon { font-size:22px; line-height:1; flex-shrink:0; margin-top:1px; }
+#goal-bubble-text { font-size:12.5px; color:var(--text); line-height:1.55; white-space:pre-line; }
+#goal-bubble-close {
+  position:absolute; top:8px; right:9px; width:18px; height:18px; border:none; border-radius:50%;
+  background:var(--surface2); color:var(--dim); font-size:10px; cursor:pointer; line-height:1;
+  display:flex; align-items:center; justify-content:center; padding:0;
+}
+#goal-bubble-close:hover { background:var(--border); color:var(--text); }
+
 /* ══════════════════════════════════════════════
    CODE PANEL
 ══════════════════════════════════════════════ */
@@ -589,6 +609,7 @@ header { display:flex; align-items:center; justify-content:space-between; paddin
     <div id="puzzle-select-wrap">
       <label>Select Level</label>
       <select id="puzzle-select">
+        <option value="p0">Level 0 — First Steps</option>
         <option value="p1">Level 1 — Open Field</option>
         <option value="p2">Level 2 — Tight Budget</option>
         <option value="p3">Level 3 — Low Light Lab</option>
@@ -608,6 +629,7 @@ header { display:flex; align-items:center; justify-content:space-between; paddin
   <div class="sim-canvas-area">
     <canvas id="sim-canvas" width="640" height="400" tabindex="0"></canvas>
     <div id="canvas-overlay"><div id="overlay-title"></div><div id="overlay-body"></div></div>
+    <div id="goal-bubble"><button id="goal-bubble-close" title="Dismiss">✕</button><div id="goal-bubble-icon">🤖</div><div id="goal-bubble-text"></div></div>
     <div class="key-hints">
       <span class="key">↑↓</span> Drive &nbsp;
       <span class="key">←→</span> Rotate &nbsp;
@@ -697,6 +719,7 @@ header { display:flex; align-items:center; justify-content:space-between; paddin
     </div>
     <div id="lb-tabs">
       <button class="lb-tab active" data-level="all">All Levels</button>
+      <button class="lb-tab" data-level="p0">Lvl 0</button>
       <button class="lb-tab" data-level="p1">Lvl 1</button>
       <button class="lb-tab" data-level="p2">Lvl 2</button>
       <button class="lb-tab" data-level="p3">Lvl 3</button>
@@ -804,13 +827,29 @@ const TRAIL_MAX  = 80;
 const SPD        = 2.8;
 const ROT        = 3.2;
 
-const LS_KEY     = 'robotSensorGame_leaderboard_v1';
+const LS_KEY     = 'robotSensorGame_leaderboard_v2';
 const TUT_KEY    = 'robotSensorGame_tutSeen_v2';
 
 // ═══════════════════════════════════════════════════
 // PUZZLE DEFINITIONS
 // ═══════════════════════════════════════════════════
 const PUZZLES = {
+  p0:{
+    name:'Level 0 — First Steps', creditLimit:5, slotLimit:3,
+    startX:320, startY:300,
+    desc:'A warm-up run: one sensor, one tag, zero obstacles. Take your time.',
+    constraint:'No walls, no dark zones — just get comfortable driving and coding.',
+    camRange:280, darkZones:[], ramp:null,
+    obs:[
+      {x:20,y:20,w:600,h:12},{x:20,y:20,w:12,h:360},
+      {x:608,y:20,w:12,h:360},{x:20,y:368,w:600,h:12},
+    ],
+    tags:[{id:0,x:320,y:80,size:28,label:'AT#0'},{id:1,x:540,y:300,size:28,label:'AT#1'}],
+    challenges:[
+      {tagId:0,timeLimit:60,name:'Level 0a — Straight Ahead',hint:"🎯 Goal: reach AT#0, straight ahead of you.\n\nAdd a Move block and increase its pixel value until the robot travels far enough. Hit ▶ Run when ready!"},
+      {tagId:1,timeLimit:60,name:'Level 0b — Turn and Go',hint:"🎯 Goal: reach AT#1 — it's directly to your right.\n\nAdd a Turn Right block, then a Move block after it, so the robot turns first and then drives forward into the tag."},
+    ],
+  },
   p1:{
     name:'Level 1 — Open Field', creditLimit:4, slotLimit:3,
     startX:320, startY:200,
@@ -825,7 +864,10 @@ const PUZZLES = {
     ],
     tags:[{id:0,x:80,y:80,size:28,label:'AT#0'},{id:1,x:560,y:340,size:28,label:'AT#1'},
           {id:2,x:560,y:60,size:28,label:'AT#2'},{id:3,x:80,y:340,size:28,label:'AT#3'}],
-    challenges:[{tagId:1,timeLimit:35,name:'Level 1a'},{tagId:2,timeLimit:30,name:'Level 1b'}],
+    challenges:[
+      {tagId:1,timeLimit:35,name:'Level 1a',hint:"🎯 Goal: reach AT#1, down and to the right, past the corner walls.\n\nTry increasing the Move block's pixel value so you travel far enough, and use a Turn Right block to angle toward it. Watch out for the wall in the corner!"},
+      {tagId:2,timeLimit:30,name:'Level 1b',hint:"🎯 Goal: reach AT#2, up and to the right this time.\n\nYou'll need a Turn block pointing the other way before moving forward. Only 4 credits this level — pick your sensor wisely!"},
+    ],
   },
   p2:{
     name:'Level 2 — Tight Budget', creditLimit:3, slotLimit:2,
@@ -843,7 +885,10 @@ const PUZZLES = {
     ],
     tags:[{id:0,x:100,y:200,size:28,label:'AT#0'},{id:1,x:540,y:200,size:28,label:'AT#1'},
           {id:2,x:315,y:310,size:28,label:'AT#2'},{id:3,x:315,y:60,size:28,label:'AT#3'}],
-    challenges:[{tagId:2,timeLimit:35,name:'Level 2a'},{tagId:1,timeLimit:28,name:'Level 2b'}],
+    challenges:[
+      {tagId:2,timeLimit:35,name:'Level 2a',hint:"🎯 Goal: reach AT#2, almost straight down from the start.\n\nThere's an inner wall in the middle of the arena — you may need to go around it. Remember: only 3 credits and 2 sensor slots total this level!"},
+      {tagId:1,timeLimit:28,name:'Level 2b',hint:"🎯 Goal: reach AT#1, straight to the right.\n\nVision (3cr) and Proximity (2cr) can't both fit in your budget — think about which single sensor gets the job done."},
+    ],
   },
   p3:{
     name:'Level 3 — Low Light Lab', creditLimit:4, slotLimit:2,
@@ -862,7 +907,10 @@ const PUZZLES = {
     ],
     tags:[{id:0,x:140,y:330,size:28,label:'AT#0'},{id:1,x:500,y:80,size:28,label:'AT#1'},
           {id:2,x:310,y:340,size:28,label:'AT#2'},{id:3,x:520,y:310,size:28,label:'AT#3'}],
-    challenges:[{tagId:0,timeLimit:40,name:'Level 3a'},{tagId:3,timeLimit:35,name:'Level 3b'}],
+    challenges:[
+      {tagId:0,timeLimit:40,name:'Level 3a',hint:"🎯 Goal: reach AT#0, down and to the left — through a dark zone.\n\nVision loses range in the dark. If your camera can't see far enough, a Proximity sensor still works fine in the dark to help you avoid walls."},
+      {tagId:3,timeLimit:35,name:'Level 3b',hint:"🎯 Goal: reach AT#3, down and to the right.\n\nPlan a path around the dark zones and inner walls — Proximity (IR) keeps working even where Vision goes dim."},
+    ],
   },
   p4:{
     name:'Level 4 — The Gauntlet', creditLimit:5, slotLimit:3,
@@ -882,7 +930,11 @@ const PUZZLES = {
     tags:[{id:0,x:100,y:300,size:28,label:'AT#0'},{id:1,x:550,y:300,size:28,label:'AT#1'},
           {id:2,x:100,y:60,size:28,label:'AT#2'},{id:3,x:550,y:60,size:28,label:'AT#3'},
           {id:4,x:320,y:190,size:28,label:'AT#4'}],
-    challenges:[{tagId:0,timeLimit:40,name:'Gauntlet 1'},{tagId:3,timeLimit:35,name:'Gauntlet 2'},{tagId:4,timeLimit:30,name:'Final'}],
+    challenges:[
+      {tagId:0,timeLimit:40,name:'Gauntlet 1',hint:"🎯 Goal: reach AT#0, down and to the left, through a dark zone and a tight corridor.\n\nYou've got 5 credits this level — combining two sensors is possible if you plan your slots carefully."},
+      {tagId:3,timeLimit:35,name:'Gauntlet 2',hint:"🎯 Goal: reach AT#3, up and to the right, past the middle corridor walls.\n\nRe-use what worked last stage — same budget rules, new route."},
+      {tagId:4,timeLimit:30,name:'Final',hint:"🎯 Final goal: AT#4 sits right near the center — very close to your start position!\n\nA short, careful Move should be all you need. Watch your timing."},
+    ],
   },
   p5:{
     name:'Level 5 — The Ramp', creditLimit:5, slotLimit:3,
@@ -904,9 +956,9 @@ const PUZZLES = {
       {id:3, x:310, y:175, size:28, label:'AT#3'},
     ],
     challenges:[
-      {tagId:0, timeLimit:25, name:'Part 1 — Learn the Bottom'},
-      {tagId:1, timeLimit:55, name:'Part 2 — Cross the Ramp'},
-      {tagId:3, timeLimit:45, name:'Part 3 — Upper Zone'},
+      {tagId:0, timeLimit:25, name:'Part 1 — Learn the Bottom',hint:"🎯 Goal: reach AT#0, straight to your right along the bottom floor.\n\nNo ramp needed yet — just get comfortable driving in the dark bottom zone first."},
+      {tagId:1, timeLimit:55, name:'Part 2 — Cross the Ramp',hint:"🎯 Goal: reach AT#1, up and to the left — but the only way up is the one-way ramp on the right.\n\nHead right to the ramp first, ride it up, then travel left across the top. Remember: once you're up, you can't come back down!"},
+      {tagId:3, timeLimit:45, name:'Part 3 — Upper Zone',hint:"🎯 Goal: reach AT#3, up on the platform in the upper zone.\n\nCross the ramp again, then navigate carefully through the upper zone to the middle platform."},
     ],
   },
 };
@@ -923,8 +975,8 @@ const BLOCK_DEFS = {
 // ═══════════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════════
-let currentKey = 'p1';
-let puzzle     = PUZZLES.p1;
+let currentKey = 'p0';
+let puzzle     = PUZZLES.p0;
 const placedSensors = [];
 const robot = {x:320,y:200,angle:0};
 const trail = [];
@@ -949,6 +1001,7 @@ let cachedTags  = [];
 
 let pendingScore = null;
 let lbActiveTab  = 'all';
+let levelStartTime = null;
 
 // ═══════════════════════════════════════════════════
 // ELEMENTS
@@ -970,6 +1023,8 @@ const challengeBtn   = document.getElementById('challenge-btn');
 const overlay        = document.getElementById('canvas-overlay');
 const overlayTitle   = document.getElementById('overlay-title');
 const overlayBody    = document.getElementById('overlay-body');
+const goalBubble     = document.getElementById('goal-bubble');
+const goalBubbleText = document.getElementById('goal-bubble-text');
 const budgetFill     = document.getElementById('budget-fill');
 const budgetUsedLbl  = document.getElementById('budget-used-label');
 const slotsUsed      = document.getElementById('slots-used');
@@ -995,12 +1050,13 @@ function lbSave(scores) {
 function lbAddEntry(entry) {
   const scores = lbLoad();
   scores.push(entry);
-  scores.sort((a,b) => b.timeLeft - a.timeLeft);
+  scores.sort((a,b) => a.totalTime - b.totalTime);
   lbSave(scores);
   return scores;
 }
 function lbClearAll() { try { localStorage.removeItem(LS_KEY); } catch(e){} }
 function escHtml(str) { return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fmtTotalTime(sec){ sec=Math.max(0,sec); const m=Math.floor(sec/60), s=(sec-m*60); return m>0?`${m}:${s.toFixed(1).padStart(4,'0')}`:`${s.toFixed(1)}s`; }
 
 function lbRender() {
   const scores   = lbLoad();
@@ -1019,7 +1075,7 @@ function lbRender() {
     row.style.animationDelay=`${idx*40}ms`;
     const sensorPips=(entry.sensors||[]).map(s=>`<span class="lb-sensor-pip ${s}">${{motion:'📍',proximity:'📏',vision:'👁'}[s]||s}</span>`).join('');
     const dateStr=entry.date?new Date(entry.date).toLocaleDateString('en-AU',{day:'numeric',month:'short'}):'—';
-    row.innerHTML=`<div class="lb-rank">${medal}</div><div class="lb-info"><div class="lb-name">${escHtml(entry.name||'Anonymous')}</div><div class="lb-meta">${escHtml(entry.levelName)} · ${escHtml(entry.challengeName)} · ${dateStr}</div></div><div class="lb-score-col"><div class="lb-sensors">${sensorPips}</div></div><div class="lb-score-col"><div class="lb-time">+${entry.timeLeft}s</div><div class="lb-time-label">remaining</div></div>`;
+    row.innerHTML=`<div class="lb-rank">${medal}</div><div class="lb-info"><div class="lb-name">${escHtml(entry.name||'Anonymous')}</div><div class="lb-meta">${escHtml(entry.levelName)} · ${escHtml(entry.challengeName)} · ${dateStr}</div></div><div class="lb-score-col"><div class="lb-sensors">${sensorPips}</div></div><div class="lb-score-col"><div class="lb-time">${fmtTotalTime(entry.totalTime)}</div><div class="lb-time-label">total time</div></div>`;
     body.appendChild(row);
   });
 }
@@ -1066,7 +1122,7 @@ lbSaveBtn.addEventListener('click',()=>{
     levelKey:pendingScore.levelKey,
     levelName:pendingScore.levelName,
     challengeName:pendingScore.challengeName,
-    timeLeft:pendingScore.timeLeft,
+    totalTime:pendingScore.totalTime,
     sensors:pendingScore.sensors,
     date:new Date().toISOString()
   };
@@ -1095,7 +1151,7 @@ lbSaveBtn.addEventListener('click',()=>{
 // ═══════════════════════════════════════════════════
 // PUZZLE SELECTION
 // ═══════════════════════════════════════════════════
-puzzleSelect.addEventListener('change',()=>{ currentKey=puzzleSelect.value; puzzle=PUZZLES[currentKey]; challengeIndex=0; clearSensors(); updateBudgetUI(); updatePuzzleInfo(); });
+puzzleSelect.addEventListener('change',()=>{ currentKey=puzzleSelect.value; puzzle=PUZZLES[currentKey]; challengeIndex=0; levelStartTime=null; clearSensors(); updateBudgetUI(); updatePuzzleInfo(); });
 function updatePuzzleInfo(){
   const card=document.getElementById('puzzle-info-card');
   card.classList.remove('hidden');
@@ -1140,6 +1196,8 @@ function setMode(mode){
     pillSim.classList.add('active'); pillDesign.classList.remove('active');
     instr.textContent='Simulation Mode — Drive manually or program the Code Panel below.';
     buildReadings(); resetSim(); startLoop(); canvas.focus();
+    if(levelStartTime===null) levelStartTime=Date.now();
+    showGoalBubble(currentChallengeHint());
   }
 }
 pillDesign.addEventListener('click',()=>{ setMode('design'); tutHandleAction('switchDesign'); });
@@ -1211,7 +1269,7 @@ function startChallenge(){
   timerDisplay.classList.remove('urgent');
   challengeStatus.classList.add('active');
   challengeBtn.textContent='⛔ Stop';
-  updateChallengeCard(); resetSim(); hideOverlay(); keys.clear();
+  updateChallengeCard(); resetSim(); hideOverlay(); hideGoalBubble(); keys.clear();
   startProgram();
   clearInterval(challengeTimerRef);
   challengeTimerRef=setInterval(()=>{
@@ -1234,11 +1292,20 @@ function winChallenge(){
   challengeBtn.textContent='🎯 Start Puzzle'; stopProgram();
   const c=puzzle.challenges[challengeIndex];
   const isLast=challengeIndex>=puzzle.challenges.length-1;
-  const uniqueSensors=[...new Set(placedSensors.map(s=>s.type))];
-  pendingScore={levelKey:currentKey,levelName:puzzle.name,challengeName:c.name,timeLeft:challengeTimeLeft,sensors:uniqueSensors};
-  lbSaveBtn.disabled=!lbNameInput.value.trim();
   challengeIndex=isLast?challengeIndex:challengeIndex+1;
-  showOverlay(isLast?'🏆 Level Complete!':`✅ ${c.name} Done!`,(isLast?`All tags reached with ${challengeTimeLeft}s remaining!`:`Tag found with ${challengeTimeLeft}s to spare! Next: ${puzzle.challenges[challengeIndex].name}`)+'\n\n🏆 Open the Leaderboard to save your score!',isLast?0:4000);
+  if(isLast){
+    const uniqueSensors=[...new Set(placedSensors.map(s=>s.type))];
+    const totalTime=levelStartTime!==null?(Date.now()-levelStartTime)/1000:0;
+    const stageWord=puzzle.challenges.length>1?`all ${puzzle.challenges.length} stages`:'the level';
+    pendingScore={levelKey:currentKey,levelName:puzzle.name,challengeName:`Completed ${stageWord}`,totalTime,sensors:uniqueSensors};
+    lbSaveBtn.disabled=!lbNameInput.value.trim();
+    levelStartTime=null;
+    showOverlay('🏆 Level Complete!',`Finished ${stageWord.replace('all ','')} in ${fmtTotalTime(totalTime)}!\n\nOpening the leaderboard so you can save your score…`,0);
+    setTimeout(()=>{ hideOverlay(); lbOpen(); },1400);
+  } else {
+    showOverlay(`✅ ${c.name} Done!`,`Tag found with ${challengeTimeLeft}s to spare!\n\nNext up: ${puzzle.challenges[challengeIndex].name}`,2200);
+    setTimeout(()=>{ resetSim(); updateChallengeCard(); showGoalBubble(currentChallengeHint()); },2200);
+  }
   updateChallengeCard();
 }
 function updateChallengeCard(){
@@ -1265,6 +1332,25 @@ challengeBtn.addEventListener('click',()=>{ if(challengeActive) stopChallenge();
 function showOverlay(title,body,ms){ overlayTitle.textContent=title; overlayBody.textContent=body; overlay.classList.add('show'); if(ms>0) setTimeout(hideOverlay,ms); }
 function hideOverlay(){ overlay.classList.remove('show'); }
 canvas.addEventListener('click',hideOverlay);
+
+// ═══════════════════════════════════════════════════
+// GOAL SPEECH BUBBLE
+// ═══════════════════════════════════════════════════
+let goalBubbleTimer=null;
+function currentChallengeHint(){
+  const ci=Math.min(challengeIndex,puzzle.challenges.length-1);
+  const c=puzzle.challenges[ci];
+  return c.hint || `🎯 Goal: find AT#${c.tagId} within ${c.timeLimit}s.`;
+}
+function showGoalBubble(text){
+  goalBubbleText.textContent=text;
+  goalBubble.classList.add('show');
+  clearTimeout(goalBubbleTimer);
+  goalBubbleTimer=setTimeout(hideGoalBubble,9000);
+}
+function hideGoalBubble(){ goalBubble.classList.remove('show'); clearTimeout(goalBubbleTimer); }
+document.getElementById('goal-bubble-close').addEventListener('click',hideGoalBubble);
+canvas.addEventListener('click',hideGoalBubble);
 
 // ═══════════════════════════════════════════════════
 // SIMULATION
@@ -1529,7 +1615,11 @@ function update(dt){
     if(dir!==0){trail.push({x:robot.x,y:robot.y});if(trail.length>TRAIL_MAX)trail.shift();}
   }
   cachedVis=hasVision?visibleObs():[];
-  cachedTags=hasVision?visibleTags():[];
+  {
+    const ci=Math.min(challengeIndex,puzzle.challenges.length-1);
+    const goalTagId=puzzle.challenges[ci].tagId;
+    cachedTags=hasVision?visibleTags().filter(t=>t.id===goalTagId):[];
+  }
   if(challengeActive){
     const ci=Math.min(challengeIndex,puzzle.challenges.length-1);
     const gt=puzzle.tags.find(t=>t.id===puzzle.challenges[ci].tagId);
