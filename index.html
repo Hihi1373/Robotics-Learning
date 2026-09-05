@@ -157,12 +157,12 @@ header { display:flex; align-items:center; justify-content:space-between; paddin
 
 /* ── GOAL SPEECH BUBBLE ── */
 #goal-bubble {
-  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%) scale(.96);
+  position:fixed; top:50%; left:50%; transform:translate(-50%,-50%) scale(.96);
   background:#fff; border:2px solid var(--blue); border-radius:16px;
-  padding:16px 36px 16px 18px; max-width:340px; text-align:left;
+  padding:16px 36px 16px 18px; max-width:360px; text-align:left;
   box-shadow:0 10px 34px rgba(11,94,215,.22);
   display:flex; align-items:flex-start; gap:10px;
-  opacity:0; pointer-events:none; z-index:16;
+  opacity:0; pointer-events:none; z-index:60;
   transition:opacity .2s ease, transform .2s ease;
 }
 #goal-bubble.show { opacity:1; transform:translate(-50%,-50%) scale(1); pointer-events:auto; }
@@ -216,7 +216,8 @@ header { display:flex; align-items:center; justify-content:space-between; paddin
   background:#0f172a;
   flex-shrink:0;
   width:100px;
-  justify-content:center;
+  justify-content:flex-start;
+  overflow-y:auto;
 }
 #block-palette .pal-label {
   font-size:9px; font-weight:700; letter-spacing:1px; color:#475569;
@@ -275,6 +276,8 @@ header { display:flex; align-items:center; justify-content:space-between; paddin
 .block-turnright { background:#7c3aed; color:#fff; border-color:#6d28d9; }
 .block-wait      { background:#475569; color:#fff; border-color:#334155; }
 .block-repeat    { background:#db2777; color:#fff; border-color:#be185d; }
+.block-ifwall    { background:#0e7490; color:#fff; border-color:#155e75; }
+.block-iftag     { background:#a21caf; color:#fff; border-color:#86198f; }
 .rc-btn { padding:0; height:32px; border-radius:7px; border:none; font-size:12px; font-weight:700; cursor:pointer; transition:all .15s; width:100%; font-family:'Segoe UI',sans-serif; }
 .rc-run  { background:#16a34a; color:#fff; }
 .rc-run:hover { filter:brightness(1.1); }
@@ -629,7 +632,6 @@ header { display:flex; align-items:center; justify-content:space-between; paddin
   <div class="sim-canvas-area">
     <canvas id="sim-canvas" width="640" height="400" tabindex="0"></canvas>
     <div id="canvas-overlay"><div id="overlay-title"></div><div id="overlay-body"></div></div>
-    <div id="goal-bubble"><button id="goal-bubble-close" title="Dismiss">✕</button><div id="goal-bubble-icon">🤖</div><div id="goal-bubble-text"></div></div>
     <div class="key-hints">
       <span class="key">↑↓</span> Drive &nbsp;
       <span class="key">←→</span> Rotate &nbsp;
@@ -641,7 +643,7 @@ header { display:flex; align-items:center; justify-content:space-between; paddin
     <div class="panel-heading">Sensor Readings</div>
     <div id="readings-container"></div>
     <div class="sim-side-btns">
-      <button class="btn btn-challenge" id="challenge-btn">🎯 Start Puzzle</button>
+      <button class="btn btn-challenge" id="challenge-btn" title="Runs your program against the clock">🎯 Start Puzzle / Run Code</button>
       <button id="lb-open-btn">🏆 Leaderboard</button>
       <button class="btn btn-ghost" id="back-design-btn">← Back to Design</button>
       <button class="btn btn-danger btn-sm" id="reset-sim-btn">Reset Position</button>
@@ -664,19 +666,23 @@ header { display:flex; align-items:center; justify-content:space-between; paddin
         <div class="prog-block pal-block block-turnright" data-btype="turnright" title="Turn right">↻<div class="pb-label">Right</div></div>
         <div class="prog-block pal-block block-wait"      data-btype="wait"      title="Wait">⏸<div class="pb-label">Wait</div></div>
         <div class="prog-block pal-block block-repeat"    data-btype="repeat"    title="Repeat all x times">🔁<div class="pb-label">Repeat</div></div>
+        <div class="prog-block pal-block block-ifwall"    data-btype="ifwall"    title="If an obstacle is close, turn right (needs Proximity sensor)">📏<div class="pb-label">If Wall</div></div>
+        <div class="prog-block pal-block block-iftag"     data-btype="iftag"     title="If the target tag is visible, stop (needs Vision sensor)">👁<div class="pb-label">If Tag</div></div>
       </div>
       <div id="sequence-wrap">
         <div id="sequence-empty">← Drag blocks here to build your program</div>
         <div id="sequence-list"></div>
       </div>
       <div id="run-controls">
-        <button class="rc-btn rc-run"   id="rc-run">▶ Run</button>
+        <button class="rc-btn rc-run"   id="rc-run" title="Try your code without starting the timer">▶ Test Run</button>
         <button class="rc-btn rc-step"  id="rc-step">⏭ Step</button>
         <button class="rc-btn rc-clear" id="rc-clear">✕ Clear</button>
       </div>
     </div>
   </div>
 </div>
+
+<div id="goal-bubble"><button id="goal-bubble-close" title="Dismiss">✕</button><div id="goal-bubble-icon">🤖</div><div id="goal-bubble-text"></div></div>
 
 <!-- ══ INTERACTIVE TUTORIAL SPOTLIGHT ══ -->
 <svg id="tut-curtain-svg" xmlns="http://www.w3.org/2000/svg">
@@ -851,7 +857,7 @@ const PUZZLES = {
     ],
   },
   p1:{
-    name:'Level 1 — Open Field', creditLimit:4, slotLimit:3,
+    name:'Level 1 — Open Field', creditLimit:4, slotLimit:4,
     startX:320, startY:200,
     desc:'Find the goal tag using less than 4 credits.',
     constraint:'Real robots require sensor tradeoffs. Choose wisely.',
@@ -870,10 +876,10 @@ const PUZZLES = {
     ],
   },
   p2:{
-    name:'Level 2 — Tight Budget', creditLimit:3, slotLimit:2,
+    name:'Level 2 — Tight Budget', creditLimit:3, slotLimit:4,
     startX:320, startY:200,
-    desc:"Only 3 credits and 2 slots. Vision (3cr) and Proximity (2cr) can't coexist.",
-    constraint:'Robots have strict hardware cost limits.',
+    desc:"Only 3 credits total. Vision (3cr) and Proximity (2cr) together cost more than you have — pick wisely.",
+    constraint:'Robots have strict hardware budget limits.',
     camRange:180, darkZones:[], ramp:null,
     obs:[
       {x:30,y:30,w:90,h:12},{x:30,y:30,w:12,h:90},
@@ -886,12 +892,12 @@ const PUZZLES = {
     tags:[{id:0,x:100,y:200,size:28,label:'AT#0'},{id:1,x:540,y:200,size:28,label:'AT#1'},
           {id:2,x:315,y:310,size:28,label:'AT#2'},{id:3,x:315,y:60,size:28,label:'AT#3'}],
     challenges:[
-      {tagId:2,timeLimit:35,name:'Level 2a',hint:"🎯 Goal: reach AT#2, almost straight down from the start.\n\nThere's an inner wall in the middle of the arena — you may need to go around it. Remember: only 3 credits and 2 sensor slots total this level!"},
+      {tagId:2,timeLimit:35,name:'Level 2a',hint:"🎯 Goal: reach AT#2, almost straight down from the start.\n\nThere's an inner wall in the middle of the arena — you may need to go around it. Remember: only 3 credits total this level!"},
       {tagId:1,timeLimit:28,name:'Level 2b',hint:"🎯 Goal: reach AT#1, straight to the right.\n\nVision (3cr) and Proximity (2cr) can't both fit in your budget — think about which single sensor gets the job done."},
     ],
   },
   p3:{
-    name:'Level 3 — Low Light Lab', creditLimit:4, slotLimit:2,
+    name:'Level 3 — Low Light Lab', creditLimit:4, slotLimit:4,
     startX:320, startY:200,
     desc:'Dark zones cut camera range. IR proximity still works in the dark.',
     constraint:'Camera sensors degrade in poor lighting. Proximity (IR) works where vision fails.',
@@ -913,7 +919,7 @@ const PUZZLES = {
     ],
   },
   p4:{
-    name:'Level 4 — The Gauntlet', creditLimit:5, slotLimit:3,
+    name:'Level 4 — The Gauntlet', creditLimit:5, slotLimit:4,
     startX:320, startY:200,
     desc:'Dark zones, tight corridors, AND a strict budget. Full emergent navigation required.',
     constraint:'Robots must navigate constrained environments under hardware limits.',
@@ -937,7 +943,7 @@ const PUZZLES = {
     ],
   },
   p5:{
-    name:'Level 5 — The Ramp', creditLimit:5, slotLimit:3,
+    name:'Level 5 — The Ramp', creditLimit:5, slotLimit:4,
     startX:240, startY:330,
     desc:'The upper zone is ONLY reachable via the one-way ramp. Once up, you cannot come back down.',
     constraint:'Robots commit to multi-level paths. Wrong sensor choice means mission failure.',
@@ -970,6 +976,8 @@ const BLOCK_DEFS = {
   turnright: { icon:'↻', label:'Right',  cls:'block-turnright', defaultParam:90,  unit:'°',   description:'Turn right N degrees' },
   wait:      { icon:'⏸', label:'Wait',   cls:'block-wait',      defaultParam:1,   unit:'s',   description:'Wait N seconds' },
   repeat:    { icon:'🔁', label:'Repeat', cls:'block-repeat',    defaultParam:2,   unit:'×',   description:'Repeat whole sequence N times' },
+  ifwall:    { icon:'📏', label:'If Wall', cls:'block-ifwall',   defaultParam:80,  unit:'px',  description:'Needs Proximity: if an obstacle is within N px ahead, turn right 90°. Otherwise, continue straight to the next block.' },
+  iftag:     { icon:'👁', label:'If Tag',  cls:'block-iftag',    defaultParam:30,  unit:'°',   description:'Needs Vision: if the target tag is visible right now, stop the program (success!). Otherwise, turn N° to keep searching.' },
 };
 
 // ═══════════════════════════════════════════════════
@@ -977,6 +985,12 @@ const BLOCK_DEFS = {
 // ═══════════════════════════════════════════════════
 let currentKey = 'p0';
 let puzzle     = PUZZLES.p0;
+const LEVEL_ORDER = ['p0','p1','p2','p3','p4','p5'];
+function nextLevelKey(fromKey){
+  const i=LEVEL_ORDER.indexOf(fromKey);
+  if(i===-1||i>=LEVEL_ORDER.length-1) return null;
+  return LEVEL_ORDER[i+1];
+}
 const placedSensors = [];
 const robot = {x:320,y:200,angle:0};
 const trail = [];
@@ -1146,6 +1160,23 @@ lbSaveBtn.addEventListener('click',()=>{
   setTimeout(()=>{
     lbNameInput.placeholder='Enter your name to save score…';
   },2500);
+
+  // Auto-advance to the next level after saving
+  const nextKey=nextLevelKey(entry.levelKey);
+  setTimeout(()=>{
+    lbClose();
+    if(nextKey){
+      currentKey=nextKey; puzzle=PUZZLES[nextKey];
+      challengeIndex=0; levelStartTime=null;
+      clearSensors(); updateBudgetUI(); updatePuzzleInfo();
+      puzzleSelect.value=nextKey;
+      setMode('design');
+      showGoalBubble(`🎉 Nice work finishing ${entry.levelName}!\n\nNext up: ${puzzle.name}\n${puzzle.desc}\n\nDesign your robot below, then press ▶ Run when you're ready.`);
+    } else {
+      setMode('design');
+      showGoalBubble(`🏆 Incredible — you've completed every level!\n\nFeel free to replay any level from the dropdown to beat your best time.`);
+    }
+  },900);
 });
 
 // ═══════════════════════════════════════════════════
@@ -1284,12 +1315,12 @@ function startChallenge(){
 function stopChallenge(){
   challengeActive=false; clearInterval(challengeTimerRef);
   challengeStatus.classList.remove('active'); timerDisplay.classList.remove('urgent');
-  challengeBtn.textContent='🎯 Start Puzzle'; stopProgram(); updateChallengeCard();
+  challengeBtn.textContent='🎯 Start Puzzle / Run Code'; stopProgram(); updateChallengeCard();
 }
 function winChallenge(){
   clearInterval(challengeTimerRef); challengeActive=false;
   challengeStatus.classList.remove('active'); timerDisplay.classList.remove('urgent');
-  challengeBtn.textContent='🎯 Start Puzzle'; stopProgram();
+  challengeBtn.textContent='🎯 Start Puzzle / Run Code'; stopProgram();
   const c=puzzle.challenges[challengeIndex];
   const isLast=challengeIndex>=puzzle.challenges.length-1;
   challengeIndex=isLast?challengeIndex:challengeIndex+1;
@@ -1492,20 +1523,45 @@ function framesFor(item){
   if(item.type==='repeat') return 1;
   return 60;
 }
+// Evaluates sensor conditions for If Wall / If Tag the moment they're reached,
+// storing the outcome in activeCond so applyInstruction can act on it consistently
+// for the whole duration of that step.
+let activeCond  = null;
+let pendingHalt = false;
+function computeFramesNeeded(item){
+  if(item.type==='ifwall'){
+    const hasProx=placedSensors.some(s=>s.type==='proximity');
+    const dist=hasProx?castRay(robot.x,robot.y,robot.angle):Infinity;
+    const hit=hasProx&&dist<=item.param;
+    activeCond={type:'ifwall',hit};
+    return hit?Math.ceil(90/ROT):6;
+  }
+  if(item.type==='iftag'){
+    const hasVis=placedSensors.some(s=>s.type==='vision');
+    const ci=Math.min(challengeIndex,puzzle.challenges.length-1);
+    const goalId=puzzle.challenges[ci].tagId;
+    const seen=hasVis&&visibleTags().some(t=>t.id===goalId);
+    activeCond={type:'iftag',seen};
+    if(seen){ pendingHalt=true; return 6; }
+    return Math.ceil(item.param/ROT);
+  }
+  activeCond=null;
+  return framesFor(item);
+}
 function startProgram(){
   if(!program.length){showOverlay('⚠️ Empty Program','Drag blocks into the sequence first.',2000);return;}
   progRunning=true; progStepping=false;
-  progStep=0; progFrames=0; progRepeatCount=0; progTurnRotated=0;
+  progStep=0; progFrames=0; progRepeatCount=0; progTurnRotated=0; pendingHalt=false;
   const rep=program.find(b=>b.type==='repeat');
   progRepeatTotal=rep?rep.param:0;
-  progFramesNeeded=framesFor(program[0]);
-  rcRun.textContent='⏹ Stop'; rcRun.classList.add('running');
+  progFramesNeeded=computeFramesNeeded(program[0]);
+  rcRun.textContent='⏹ Stop Test'; rcRun.classList.add('running');
   rcStep.disabled=true; updateProgStatus('RUNNING'); renderSequence();
 }
 function stopProgram(){
   progRunning=false; progStepping=false;
-  progStep=0; progFrames=0; progTurnRotated=0;
-  rcRun.textContent='▶ Run'; rcRun.classList.remove('running');
+  progStep=0; progFrames=0; progTurnRotated=0; activeCond=null; pendingHalt=false;
+  rcRun.textContent='▶ Test Run'; rcRun.classList.remove('running');
   rcStep.disabled=false; updateProgStatus('IDLE'); renderSequence();
 }
 function stepOnce(){
@@ -1513,7 +1569,7 @@ function stepOnce(){
   progStepping=true; progRunning=true;
   if(progStep>=program.length) progStep=0;
   progFrames=0; progTurnRotated=0;
-  progFramesNeeded=framesFor(program[progStep]);
+  progFramesNeeded=computeFramesNeeded(program[progStep]);
   updateProgStatus(`STEP ${progStep+1}/${program.length}`); renderSequence();
 }
 rcRun.addEventListener('click',()=>{ if(progRunning) stopProgram(); else startProgram(); });
@@ -1523,16 +1579,22 @@ function tickProgram(dt){
   if(!progRunning) return;
   if(progStep>=program.length){stopProgram();return;}
   const item=program[progStep];
-  if(item.type==='repeat'){progStep++;progFrames=0;progTurnRotated=0;if(progStep>=program.length){stopProgram();return;}progFramesNeeded=framesFor(program[progStep]);renderSequence();return;}
+  if(item.type==='repeat'){progStep++;progFrames=0;progTurnRotated=0;if(progStep>=program.length){stopProgram();return;}progFramesNeeded=computeFramesNeeded(program[progStep]);renderSequence();return;}
   progFrames+=dt; applyInstruction(item,dt);
   if(progFrames>=progFramesNeeded){
     progStep++; progFrames=0; progTurnRotated=0;
+    if(pendingHalt){
+      pendingHalt=false;
+      stopProgram();
+      showOverlay('👁️ Tag Spotted!','Vision sensor found the target tag — program stopped.',2200);
+      return;
+    }
     if(progStep>=program.length){
       const rep=program.find(b=>b.type==='repeat'); progRepeatCount++;
-      if(rep&&progRepeatCount<rep.param){progStep=0;progFramesNeeded=framesFor(program[0]);progTurnRotated=0;}
+      if(rep&&progRepeatCount<rep.param){progStep=0;progFramesNeeded=computeFramesNeeded(program[0]);progTurnRotated=0;}
       else{stopProgram();return;}
-    } else { progFramesNeeded=framesFor(program[progStep]); }
-    if(progStepping){progRunning=false;progStepping=false;rcRun.textContent='▶ Run';rcRun.classList.remove('running');rcStep.disabled=false;updateProgStatus(`PAUSED @ step ${progStep}`);}
+    } else { progFramesNeeded=computeFramesNeeded(program[progStep]); }
+    if(progStepping){progRunning=false;progStepping=false;rcRun.textContent='▶ Test Run';rcRun.classList.remove('running');rcStep.disabled=false;updateProgStatus(`PAUSED @ step ${progStep}`);}
     renderSequence();
   }
 }
@@ -1546,6 +1608,18 @@ function applyInstruction(item,dt){
     if(item.type==='turnleft') robot.angle-=step; else robot.angle+=step;
     return;
   } else if(item.type==='wait'){return;}
+  else if(item.type==='ifwall'){
+    if(activeCond&&activeCond.hit){
+      const remaining=90-progTurnRotated,step=Math.min(ROT*dt,Math.max(0,remaining));
+      progTurnRotated+=step; robot.angle+=step;
+    }
+    return;
+  } else if(item.type==='iftag'){
+    if(activeCond&&activeCond.seen){ return; }
+    const remaining=item.param-progTurnRotated,step=Math.min(ROT*dt,Math.max(0,remaining));
+    progTurnRotated+=step; robot.angle+=step;
+    return;
+  }
   if(puzzle.ramp){const r=puzzle.ramp;if(robot.x>r.x&&robot.x<r.x+r.w&&robot.y<=r.lineY&&vy>0)vy=0;}
   if(!collides(robot.x+vx,robot.y)) robot.x+=vx;
   if(!collides(robot.x,robot.y+vy)) robot.y+=vy;
@@ -1843,7 +1917,7 @@ const TUT_STEPS = [
     id: 'puzzle',
     icon: '🎯',
     title: 'Start a Timed Puzzle',
-    body: `When you're ready for a challenge, click <strong>🎯 Start Puzzle</strong>. A countdown starts and your program runs automatically — arrow keys are locked.<br><br>Find the <strong>flashing Hidden Tag</strong> before time runs out. You need the Vision sensor to see it!`,
+    body: `When you're ready for a challenge, click <strong>🎯 Start Puzzle / Run Code</strong>. A countdown starts and your program runs automatically — arrow keys are locked.<br><br>Find the <strong>flashing Hidden Tag</strong> before time runs out. You need the Vision sensor to see it!`,
     target: '#challenge-btn',
     arrow: 'right',
     side: 'left',
