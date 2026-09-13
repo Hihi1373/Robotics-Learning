@@ -175,6 +175,16 @@ header { display:flex; align-items:center; justify-content:space-between; paddin
 }
 #goal-bubble-close:hover { background:var(--border); color:var(--text); }
 
+/* ── PERSISTENT OBJECTIVE BADGE (top corner) ── */
+#objective-badge {
+  position:fixed; top:60px; right:14px; z-index:55;
+  background:#fff; border:2px solid #16a34a; border-radius:12px;
+  padding:8px 12px; max-width:230px;
+  box-shadow:0 4px 16px rgba(0,0,0,.14);
+}
+#objective-badge-title { font-size:10.5px; font-weight:700; color:#15803d; text-transform:uppercase; letter-spacing:.4px; margin-bottom:3px; }
+#objective-badge-text { font-size:11.5px; color:var(--text); line-height:1.45; font-family:'Courier New',monospace; }
+
 /* ══════════════════════════════════════════════
    CODE PANEL
 ══════════════════════════════════════════════ */
@@ -278,6 +288,40 @@ header { display:flex; align-items:center; justify-content:space-between; paddin
 .block-repeat    { background:#db2777; color:#fff; border-color:#be185d; }
 .block-ifwall    { background:#0e7490; color:#fff; border-color:#155e75; }
 .block-iftag     { background:#a21caf; color:#fff; border-color:#86198f; }
+
+/* ── BRACKET / CONTAINER BLOCKS (Repeat, If Wall, If Tag) ── */
+.seq-block.container-block {
+  flex-direction:row; align-items:stretch; justify-content:flex-start;
+  width:auto; height:100px; padding:0; background:#1e293b;
+  border-style:dashed;
+}
+.container-header {
+  display:flex; flex-direction:column; align-items:center; justify-content:space-between;
+  padding:8px 6px; width:58px; flex-shrink:0; border-radius:6px 0 0 6px;
+  cursor:grab; position:relative;
+}
+.container-header:active { cursor:grabbing; }
+.container-header .sb-icon, .container-header .sb-label { color:#fff; }
+.container-header .sb-param { background:rgba(0,0,0,.25); }
+.container-header .sb-num, .container-header .sb-unit { color:#fff; }
+.container-header .sb-del { color:rgba(255,255,255,.75); }
+.container-body {
+  display:flex; align-items:center; gap:5px;
+  padding:8px 10px; min-width:90px; min-height:84px;
+  border-radius:0 6px 6px 0;
+}
+.container-body-empty {
+  font-size:10px; font-family:'Courier New',monospace; opacity:.75; white-space:nowrap; padding:0 4px; color:#cbd5e1;
+}
+.block-repeat.container-block { border-color:#f472b6; }
+.block-repeat .container-header { background:#db2777; }
+.block-repeat .container-body  { background:rgba(219,39,119,0.14); }
+.block-ifwall.container-block { border-color:#22d3ee; }
+.block-ifwall .container-header { background:#0e7490; }
+.block-ifwall .container-body  { background:rgba(14,116,144,0.14); }
+.block-iftag.container-block { border-color:#e879f9; }
+.block-iftag .container-header { background:#a21caf; }
+.block-iftag .container-body  { background:rgba(162,28,175,0.14); }
 .rc-btn { padding:0; height:32px; border-radius:7px; border:none; font-size:12px; font-weight:700; cursor:pointer; transition:all .15s; width:100%; font-family:'Segoe UI',sans-serif; }
 .rc-run  { background:#16a34a; color:#fff; }
 .rc-run:hover { filter:brightness(1.1); }
@@ -665,9 +709,9 @@ header { display:flex; align-items:center; justify-content:space-between; paddin
         <div class="prog-block pal-block block-turnleft"  data-btype="turnleft"  title="Turn left">↺<div class="pb-label">Left</div></div>
         <div class="prog-block pal-block block-turnright" data-btype="turnright" title="Turn right">↻<div class="pb-label">Right</div></div>
         <div class="prog-block pal-block block-wait"      data-btype="wait"      title="Wait">⏸<div class="pb-label">Wait</div></div>
-        <div class="prog-block pal-block block-repeat"    data-btype="repeat"    title="Repeat all x times">🔁<div class="pb-label">Repeat</div></div>
-        <div class="prog-block pal-block block-ifwall"    data-btype="ifwall"    title="If an obstacle is close, turn right (needs Proximity sensor)">📏<div class="pb-label">If Wall</div></div>
-        <div class="prog-block pal-block block-iftag"     data-btype="iftag"     title="If the target tag is visible, stop (needs Vision sensor)">👁<div class="pb-label">If Tag</div></div>
+        <div class="prog-block pal-block block-repeat"    data-btype="repeat"    title="Drag blocks inside this bracket to repeat them N times">🔁<div class="pb-label">Repeat</div></div>
+        <div class="prog-block pal-block block-ifwall"    data-btype="ifwall"    title="If an obstacle is close, run what's dragged inside (needs Proximity sensor)">📏<div class="pb-label">If Wall</div></div>
+        <div class="prog-block pal-block block-iftag"     data-btype="iftag"     title="If the tag is visible, turn to face it (± offset) then run what's inside (needs Vision sensor)">👁<div class="pb-label">If Tag</div></div>
       </div>
       <div id="sequence-wrap">
         <div id="sequence-empty">← Drag blocks here to build your program</div>
@@ -683,6 +727,7 @@ header { display:flex; align-items:center; justify-content:space-between; paddin
 </div>
 
 <div id="goal-bubble"><button id="goal-bubble-close" title="Dismiss">✕</button><div id="goal-bubble-icon">🤖</div><div id="goal-bubble-text"></div></div>
+<div id="objective-badge"><div id="objective-badge-title"></div><div id="objective-badge-text"></div></div>
 
 <!-- ══ INTERACTIVE TUTORIAL SPOTLIGHT ══ -->
 <svg id="tut-curtain-svg" xmlns="http://www.w3.org/2000/svg">
@@ -970,14 +1015,14 @@ const PUZZLES = {
 };
 
 const BLOCK_DEFS = {
-  forward:   { icon:'⬆', label:'Move',   cls:'block-forward',   defaultParam:60,  unit:'px',  description:'Move forward N cm' },
-  backward:  { icon:'⬇', label:'Back',   cls:'block-backward',  defaultParam:60,  unit:'px',  description:'Move backward N cm' },
-  turnleft:  { icon:'↺', label:'Left',   cls:'block-turnleft',  defaultParam:90,  unit:'°',   description:'Turn left N degrees' },
-  turnright: { icon:'↻', label:'Right',  cls:'block-turnright', defaultParam:90,  unit:'°',   description:'Turn right N degrees' },
-  wait:      { icon:'⏸', label:'Wait',   cls:'block-wait',      defaultParam:1,   unit:'s',   description:'Wait N seconds' },
-  repeat:    { icon:'🔁', label:'Repeat', cls:'block-repeat',    defaultParam:2,   unit:'×',   description:'Repeat whole sequence N times' },
-  ifwall:    { icon:'📏', label:'If Wall', cls:'block-ifwall',   defaultParam:80,  unit:'px',  description:'Needs Proximity: if an obstacle is within N px ahead, turn right 90°. Otherwise, continue straight to the next block.' },
-  iftag:     { icon:'👁', label:'If Tag',  cls:'block-iftag',    defaultParam:30,  unit:'°',   description:'Needs Vision: if the target tag is visible right now, stop the program (success!). Otherwise, turn N° to keep searching.' },
+  forward:   { icon:'⬆', label:'Move',   cls:'block-forward',   defaultParam:60,  unit:'px',  min:1,    max:999, description:'Move forward N cm' },
+  backward:  { icon:'⬇', label:'Back',   cls:'block-backward',  defaultParam:60,  unit:'px',  min:1,    max:999, description:'Move backward N cm' },
+  turnleft:  { icon:'↺', label:'Left',   cls:'block-turnleft',  defaultParam:90,  unit:'°',   min:1,    max:999, description:'Turn left N degrees' },
+  turnright: { icon:'↻', label:'Right',  cls:'block-turnright', defaultParam:90,  unit:'°',   min:1,    max:999, description:'Turn right N degrees' },
+  wait:      { icon:'⏸', label:'Wait',   cls:'block-wait',      defaultParam:1,   unit:'s',   min:1,    max:999, description:'Wait N seconds' },
+  repeat:    { icon:'🔁', label:'Repeat', cls:'block-repeat',    defaultParam:2,   unit:'×',   min:1,    max:999, container:true, description:'Runs the blocks dragged inside this bracket N times.' },
+  ifwall:    { icon:'📏', label:'If Wall', cls:'block-ifwall',   defaultParam:80,  unit:'px',  min:1,    max:999, container:true, description:'Needs Proximity: if an obstacle is within N px ahead, runs the blocks inside this bracket once. Otherwise skips them.' },
+  iftag:     { icon:'👁', label:'If Tag',  cls:'block-iftag',    defaultParam:0,   unit:'Δ°',  min:-180, max:180, container:true, description:'Needs Vision: if the target tag is visible, turns to face it (0°) or to an offset angle (e.g. 90° = off to one side), then runs the blocks inside once. If not visible, skips them.' },
 };
 
 // ═══════════════════════════════════════════════════
@@ -1002,13 +1047,14 @@ const COLORS       = {motion:'#ffb700',proximity:'#219ebc',vision:'#9333ea'};
 
 let program      = [];
 let progRunning  = false;
-let progStep     = 0;
 let progFrames   = 0;
 let progFramesNeeded = 0;
 let progStepping = false;
-let progRepeatCount = 0;
-let progRepeatTotal = 0;
 let progTurnRotated = 0;
+let execStack    = [];
+let activeBlockRef = null;
+let blockIdCounter = 1;
+function nextBlockId(){ return blockIdCounter++; }
 let loopActive  = false;
 let cachedVis   = [];
 let cachedTags  = [];
@@ -1190,6 +1236,18 @@ function updatePuzzleInfo(){
   document.getElementById('pi-desc').textContent=puzzle.desc;
   document.getElementById('pi-constraint').textContent=puzzle.constraint;
   slotsMax.textContent=puzzle.slotLimit;
+  updateObjectiveBadge();
+}
+function updateObjectiveBadge(){
+  const badge=document.getElementById('objective-badge');
+  if(!badge) return;
+  const ci=Math.min(challengeIndex,puzzle.challenges.length-1);
+  const c=puzzle.challenges[ci];
+  const stageTxt=puzzle.challenges.length>1?`${puzzle.name} · ${c.name}`:puzzle.name;
+  let objTxt=(c.hint||'').replace(/^🎯 Goal: /,'').split('\n')[0].trim();
+  if(!objTxt) objTxt=`Find AT#${c.tagId} within ${c.timeLimit}s`;
+  document.getElementById('objective-badge-title').textContent=`🎯 ${stageTxt}`;
+  document.getElementById('objective-badge-text').textContent=objTxt;
 }
 function updateBudgetUI(){
   const used=placedSensors.reduce((a,s)=>a+SENSOR_COSTS[s.type],0);
@@ -1341,6 +1399,7 @@ function winChallenge(){
 }
 function updateChallengeCard(){
   const card=document.getElementById('r-challenge');
+  updateObjectiveBadge();
   if(!card) return;
   const ci=Math.min(challengeIndex,puzzle.challenges.length-1);
   const c=puzzle.challenges[ci];
@@ -1408,58 +1467,98 @@ function visibleTags(){ if(!placedSensors.some(s=>s.type==='vision')) return [];
 // ═══════════════════════════════════════════════════
 let codeDrag = null;
 
-function makeSeqBlock(item,idx){
+function findBlockById(list,id){
+  for(const it of list){
+    if(it.id===id) return it;
+    if(it.children){ const found=findBlockById(it.children,id); if(found) return found; }
+  }
+  return null;
+}
+function removeBlockById(list,id){
+  for(let i=0;i<list.length;i++){
+    if(list[i].id===id){ const item=list.splice(i,1)[0]; return {item, oldList:list, oldIndex:i}; }
+    if(list[i].children){
+      const res=removeBlockById(list[i].children,id);
+      if(res) return res;
+    }
+  }
+  return null;
+}
+
+function makeSeqBlock(item){
   const def=BLOCK_DEFS[item.type];
   const el=document.createElement('div');
-  el.className=`prog-block seq-block ${def.cls}`;
-  el.dataset.idx=idx;
-  el.innerHTML=`<button class="sb-del" data-idx="${idx}">×</button><div class="sb-icon">${def.icon}</div><div class="sb-label">${def.label}</div><div class="sb-param"><input class="sb-num" type="number" value="${item.param}" min="1" max="999" data-idx="${idx}"><span class="sb-unit">${def.unit}</span></div>`;
+  el.dataset.id=item.id;
+  if(def.container){
+    el.className=`prog-block seq-block container-block ${def.cls}`;
+    const paramHtml = def.unit ? `<div class="sb-param"><input class="sb-num" type="number" value="${item.param}" min="${def.min}" max="${def.max}" data-id="${item.id}"><span class="sb-unit">${def.unit}</span></div>` : '';
+    el.innerHTML=`<div class="container-header"><button class="sb-del" data-id="${item.id}">×</button><div class="sb-icon">${def.icon}</div><div class="sb-label">${def.label}</div>${paramHtml}</div><div class="container-body"></div>`;
+    const body=el.querySelector('.container-body');
+    body.programList=item.children;
+    if(!item.children.length){
+      const ph=document.createElement('div');
+      ph.className='container-body-empty';
+      ph.textContent='drop blocks here';
+      body.appendChild(ph);
+    } else {
+      item.children.forEach(child=>body.appendChild(makeSeqBlock(child)));
+    }
+  } else {
+    el.className=`prog-block seq-block ${def.cls}`;
+    el.innerHTML=`<button class="sb-del" data-id="${item.id}">×</button><div class="sb-icon">${def.icon}</div><div class="sb-label">${def.label}</div><div class="sb-param"><input class="sb-num" type="number" value="${item.param}" min="${def.min}" max="${def.max}" data-id="${item.id}"><span class="sb-unit">${def.unit}</span></div>`;
+  }
+  if(progRunning && activeBlockRef && item.id===activeBlockRef.id) el.classList.add('active-step');
   return el;
 }
 
 function renderSequence(){
   seqList.innerHTML='';
+  seqList.programList=program;
   seqEmpty.style.display=program.length?'none':'block';
-  program.forEach((item,idx)=>{
-    const el=makeSeqBlock(item,idx);
-    if(progRunning&&idx===progStep) el.classList.add('active-step');
-    seqList.appendChild(el);
-  });
+  program.forEach(item=>seqList.appendChild(makeSeqBlock(item)));
+  wireSeqEvents();
+}
+
+function wireSeqEvents(){
   seqList.querySelectorAll('.sb-num').forEach(input=>{
-    input.addEventListener('change',e=>{const i=parseInt(e.target.dataset.idx);program[i].param=Math.max(1,parseInt(e.target.value)||1);e.target.value=program[i].param;});
+    input.addEventListener('change',e=>{const id=parseInt(e.target.dataset.id);const item=findBlockById(program,id);if(item){const def=BLOCK_DEFS[item.type];let v=parseInt(e.target.value);if(isNaN(v))v=def.defaultParam;v=Math.max(def.min,Math.min(def.max,v));item.param=v;e.target.value=v;}});
     input.addEventListener('mousedown',e=>e.stopPropagation());
     input.addEventListener('click',e=>e.stopPropagation());
   });
   seqList.querySelectorAll('.sb-del').forEach(btn=>{
     btn.addEventListener('mousedown',e=>{e.stopPropagation();});
-    btn.addEventListener('click',e=>{e.stopPropagation();const i=parseInt(e.target.dataset.idx);program.splice(i,1);renderSequence();});
+    btn.addEventListener('click',e=>{e.stopPropagation();const id=parseInt(e.target.dataset.id);removeBlockById(program,id);renderSequence();});
   });
-  seqList.querySelectorAll('.seq-block').forEach((el,idx)=>{
-    el.addEventListener('mousedown',e=>{
+  seqList.querySelectorAll('.seq-block').forEach(el=>{
+    const isContainer=el.classList.contains('container-block');
+    const handle=isContainer?el.querySelector('.container-header'):el;
+    handle.addEventListener('mousedown',e=>{
       if(e.target.classList.contains('sb-del')||e.target.classList.contains('sb-num')) return;
-      e.preventDefault();
-      startCodeDrag('sequence',program[idx].type,idx,el,e,program[idx].param);
+      e.preventDefault(); e.stopPropagation();
+      const id=parseInt(el.dataset.id);
+      const item=findBlockById(program,id);
+      if(item) startCodeDrag('sequence',item.type,id,el,e,item.param);
     });
   });
 }
 
-function startCodeDrag(source,btype,idx,sourceEl,e,srcParam){
+function startCodeDrag(source,btype,id,sourceEl,e,srcParam){
   const def=BLOCK_DEFS[btype];
   const rect=sourceEl.getBoundingClientRect();
   const ghost=document.createElement('div');
-  ghost.className=`prog-block seq-block ${def.cls} code-drag-ghost`;
+  ghost.className=`prog-block seq-block code-drag-ghost ${def.cls}`;
   ghost.innerHTML=`<div class="sb-icon">${def.icon}</div><div class="sb-label">${def.label}</div>`;
   ghost.style.width='66px'; ghost.style.height='100px';
   ghost.style.left=rect.left+'px'; ghost.style.top=rect.top+'px';
   document.body.appendChild(ghost);
   const param=(source==='sequence')?srcParam:def.defaultParam;
-  codeDrag={source,btype,idx,param,ghost,ox:e.clientX-rect.left,oy:e.clientY-rect.top};
+  codeDrag={source,btype,id,param,ghost,sourceEl,ox:e.clientX-rect.left,oy:e.clientY-rect.top};
 }
 
 document.querySelectorAll('.pal-block').forEach(pal=>{
   pal.addEventListener('mousedown',e=>{
     e.preventDefault();
-    startCodeDrag('palette',pal.dataset.btype,-1,pal,e,BLOCK_DEFS[pal.dataset.btype].defaultParam);
+    startCodeDrag('palette',pal.dataset.btype,null,pal,e,BLOCK_DEFS[pal.dataset.btype].defaultParam);
   });
 });
 
@@ -1473,45 +1572,73 @@ document.addEventListener('mousemove',e=>{
 document.addEventListener('mouseup',e=>{
   if(!codeDrag) return;
   codeDrag.ghost.remove(); clearInsertMarker();
-  const insertIdx=getInsertIndex(e.clientX,e.clientY);
-  if(insertIdx!==null){
-    const newItem={type:codeDrag.btype,param:codeDrag.param};
+  const info=getDropInfo(e.clientX,e.clientY);
+  const invalidSelfNest = info && codeDrag.source==='sequence' && codeDrag.sourceEl.contains(info.container);
+  if(info && !invalidSelfNest){
+    let removedMeta=null, newItem;
     if(codeDrag.source==='sequence'){
-      program.splice(codeDrag.idx,1);
-      const adjustedIdx=insertIdx>codeDrag.idx?insertIdx-1:insertIdx;
-      program.splice(adjustedIdx,0,newItem);
+      removedMeta=removeBlockById(program,codeDrag.id);
+      if(!removedMeta){ codeDrag=null; renderSequence(); return; }
+      newItem=removedMeta.item;
     } else {
-      program.splice(insertIdx,0,newItem);
+      const def=BLOCK_DEFS[codeDrag.btype];
+      newItem={id:nextBlockId(), type:codeDrag.btype, param:codeDrag.param};
+      if(def.container) newItem.children=[];
     }
-    renderSequence();
+    const targetList=info.container.programList;
+    let idx=info.idx;
+    if(removedMeta && removedMeta.oldList===targetList && idx>removedMeta.oldIndex) idx--;
+    targetList.splice(idx,0,newItem);
     tutHandleAction('blockAdded', codeDrag.btype);
   }
   codeDrag=null;
+  renderSequence();
 });
 
-function getInsertIndex(mx,my){
+function getDropContainer(mx,my){
+  const el=document.elementFromPoint(mx,my);
+  if(el){
+    const body=el.closest('.container-body');
+    if(body) return body;
+  }
   const wrap=document.getElementById('sequence-wrap');
   const wRect=wrap.getBoundingClientRect();
-  if(mx<wRect.left||mx>wRect.right||my<wRect.top||my>wRect.bottom) return null;
-  const blocks=Array.from(seqList.querySelectorAll('.seq-block'));
+  if(mx>=wRect.left&&mx<=wRect.right&&my>=wRect.top&&my<=wRect.bottom) return seqList;
+  return null;
+}
+function getInsertIndexIn(container,mx){
+  const blocks=Array.from(container.querySelectorAll(':scope > .seq-block'));
   if(!blocks.length) return 0;
   for(let i=0;i<blocks.length;i++){const r=blocks[i].getBoundingClientRect();if(mx<r.left+r.width/2) return i;}
   return blocks.length;
+}
+function getDropInfo(mx,my){
+  const container=getDropContainer(mx,my);
+  if(!container) return null;
+  return {container, idx:getInsertIndexIn(container,mx)};
 }
 
 let insertMarkerEl=null;
 function showInsertMarker(mx,my){
   clearInsertMarker();
-  const idx=getInsertIndex(mx,my); if(idx===null) return;
+  const info=getDropInfo(mx,my); if(!info) return;
+  if(codeDrag.source==='sequence' && codeDrag.sourceEl.contains(info.container)) return;
   insertMarkerEl=document.createElement('div');
   insertMarkerEl.className='seq-insert-marker';
-  const blocks=Array.from(seqList.querySelectorAll('.seq-block'));
-  if(idx<blocks.length) seqList.insertBefore(insertMarkerEl,blocks[idx]);
-  else seqList.appendChild(insertMarkerEl);
+  const blocks=Array.from(info.container.querySelectorAll(':scope > .seq-block'));
+  if(info.idx<blocks.length) info.container.insertBefore(insertMarkerEl,blocks[info.idx]);
+  else {
+    const ph=info.container.querySelector(':scope > .container-body-empty');
+    if(ph) ph.style.display='none';
+    info.container.appendChild(insertMarkerEl);
+  }
 }
-function clearInsertMarker(){ if(insertMarkerEl){insertMarkerEl.remove();insertMarkerEl=null;} }
+function clearInsertMarker(){
+  if(insertMarkerEl){insertMarkerEl.remove();insertMarkerEl=null;}
+  document.querySelectorAll('.container-body-empty').forEach(ph=>ph.style.display='');
+}
 
-rcClear.addEventListener('click',()=>{ if(progRunning) return; program.length=0; renderSequence(); updateProgStatus('IDLE'); });
+rcClear.addEventListener('click',()=>{ if(progRunning) return; program.length=0; execStack=[]; activeBlockRef=null; renderSequence(); updateProgStatus('IDLE'); });
 
 // ═══════════════════════════════════════════════════
 // PROGRAM EXECUTION
@@ -1519,82 +1646,120 @@ rcClear.addEventListener('click',()=>{ if(progRunning) return; program.length=0;
 function framesFor(item){
   if(item.type==='forward'||item.type==='backward') return Math.ceil(item.param/SPD);
   if(item.type==='turnleft'||item.type==='turnright') return Math.ceil(item.param/ROT);
+  if(item.type==='turnto') return Math.max(1,Math.ceil(Math.abs(item.turnAmt)/ROT));
   if(item.type==='wait') return Math.ceil(item.param*60);
-  if(item.type==='repeat') return 1;
   return 60;
 }
-// Evaluates sensor conditions for If Wall / If Tag the moment they're reached,
-// storing the outcome in activeCond so applyInstruction can act on it consistently
-// for the whole duration of that step.
-let activeCond  = null;
-let pendingHalt = false;
-function computeFramesNeeded(item){
-  if(item.type==='ifwall'){
+function shortestDelta(from,to){ let d=((to-from)%360+360)%360; if(d>180) d-=360; return d; }
+
+// Deciding what happens when execution reaches a bracket (container) block:
+// how many times to run what's inside it, and — for If Tag — what heading
+// to turn to first. Same mental model for all three: resolve once, then
+// either run the contents that many times, or skip the whole bracket.
+function enterContainer(node){
+  if(node.type==='repeat') return {count:Math.max(0,node.param|0)};
+  if(node.type==='ifwall'){
     const hasProx=placedSensors.some(s=>s.type==='proximity');
     const dist=hasProx?castRay(robot.x,robot.y,robot.angle):Infinity;
-    const hit=hasProx&&dist<=item.param;
-    activeCond={type:'ifwall',hit};
-    return hit?Math.ceil(90/ROT):6;
+    return {count:(hasProx&&dist<=node.param)?1:0};
   }
-  if(item.type==='iftag'){
+  if(node.type==='iftag'){
     const hasVis=placedSensors.some(s=>s.type==='vision');
     const ci=Math.min(challengeIndex,puzzle.challenges.length-1);
     const goalId=puzzle.challenges[ci].tagId;
-    const seen=hasVis&&visibleTags().some(t=>t.id===goalId);
-    activeCond={type:'iftag',seen};
-    if(seen){ pendingHalt=true; return 6; }
-    return Math.ceil(item.param/ROT);
+    const tag=hasVis?visibleTags().find(t=>t.id===goalId):null;
+    if(!tag) return {count:0};
+    const dx=tag.x-robot.x, dy=tag.y-robot.y;
+    const angleToTag=(Math.atan2(dx,-dy)*180/Math.PI+360)%360;
+    const target=(angleToTag+(node.param||0)+360)%360;
+    return {count:1, turnAmt:shortestDelta(robot.angle,target)};
   }
-  activeCond=null;
-  return framesFor(item);
+  return {count:0};
+}
+function stepPastCurrent(){
+  const f=execStack[execStack.length-1];
+  const node=f.list[f.i];
+  const def=BLOCK_DEFS[node.type];
+  if(def && def.container){
+    const res=enterContainer(node);
+    if(res.count>0){
+      let list=node.children;
+      if(res.turnAmt!==undefined && Math.abs(res.turnAmt)>0.5){
+        list=[{id:'__turnto',type:'turnto',turnAmt:res.turnAmt}, ...node.children];
+      }
+      execStack.push({list, i:0, itersLeft:res.count});
+    } else { f.i++; }
+  } else { f.i++; }
+}
+function getCurrentBlock(){
+  while(execStack.length){
+    const f=execStack[execStack.length-1];
+    if(f.i<f.list.length) return f.list[f.i];
+    if(f.itersLeft!==undefined){
+      f.itersLeft--;
+      if(f.itersLeft>0){ f.i=0; continue; }
+    }
+    execStack.pop();
+    if(execStack.length) execStack[execStack.length-1].i++;
+  }
+  return null;
 }
 function startProgram(){
   if(!program.length){showOverlay('⚠️ Empty Program','Drag blocks into the sequence first.',2000);return;}
   progRunning=true; progStepping=false;
-  progStep=0; progFrames=0; progRepeatCount=0; progTurnRotated=0; pendingHalt=false;
-  const rep=program.find(b=>b.type==='repeat');
-  progRepeatTotal=rep?rep.param:0;
-  progFramesNeeded=computeFramesNeeded(program[0]);
+  progFrames=0; progTurnRotated=0;
+  execStack=[{list:program,i:0}];
+  const first=getCurrentBlock();
+  activeBlockRef=first;
+  progFramesNeeded=first?(BLOCK_DEFS[first.type].container?0:framesFor(first)):0;
   rcRun.textContent='⏹ Stop Test'; rcRun.classList.add('running');
   rcStep.disabled=true; updateProgStatus('RUNNING'); renderSequence();
 }
 function stopProgram(){
   progRunning=false; progStepping=false;
-  progStep=0; progFrames=0; progTurnRotated=0; activeCond=null; pendingHalt=false;
+  progFrames=0; progTurnRotated=0; execStack=[]; activeBlockRef=null;
   rcRun.textContent='▶ Test Run'; rcRun.classList.remove('running');
   rcStep.disabled=false; updateProgStatus('IDLE'); renderSequence();
 }
 function stepOnce(){
   if(!program.length) return; if(progRunning) return;
   progStepping=true; progRunning=true;
-  if(progStep>=program.length) progStep=0;
+  if(!execStack.length) execStack=[{list:program,i:0}];
   progFrames=0; progTurnRotated=0;
-  progFramesNeeded=computeFramesNeeded(program[progStep]);
-  updateProgStatus(`STEP ${progStep+1}/${program.length}`); renderSequence();
+  const cur=getCurrentBlock();
+  if(!cur){ stopProgram(); return; }
+  activeBlockRef=cur;
+  progFramesNeeded=BLOCK_DEFS[cur.type].container?0:framesFor(cur);
+  updateProgStatus('STEPPING'); renderSequence();
 }
 rcRun.addEventListener('click',()=>{ if(progRunning) stopProgram(); else startProgram(); });
 rcStep.addEventListener('click',stepOnce);
 
 function tickProgram(dt){
   if(!progRunning) return;
-  if(progStep>=program.length){stopProgram();return;}
-  const item=program[progStep];
-  if(item.type==='repeat'){progStep++;progFrames=0;progTurnRotated=0;if(progStep>=program.length){stopProgram();return;}progFramesNeeded=computeFramesNeeded(program[progStep]);renderSequence();return;}
+  let item=getCurrentBlock();
+  if(!item){ stopProgram(); return; }
+  const def=BLOCK_DEFS[item.type];
+  if(def && def.container){
+    stepPastCurrent();
+    progFrames=0; progTurnRotated=0;
+    item=getCurrentBlock();
+    if(!item){ stopProgram(); return; }
+    activeBlockRef=item;
+    progFramesNeeded=framesFor(item);
+    renderSequence();
+    return;
+  }
+  activeBlockRef=item;
   progFrames+=dt; applyInstruction(item,dt);
   if(progFrames>=progFramesNeeded){
-    progStep++; progFrames=0; progTurnRotated=0;
-    if(pendingHalt){
-      pendingHalt=false;
-      stopProgram();
-      showOverlay('👁️ Tag Spotted!','Vision sensor found the target tag — program stopped.',2200);
-      return;
-    }
-    if(progStep>=program.length){
-      const rep=program.find(b=>b.type==='repeat'); progRepeatCount++;
-      if(rep&&progRepeatCount<rep.param){progStep=0;progFramesNeeded=computeFramesNeeded(program[0]);progTurnRotated=0;}
-      else{stopProgram();return;}
-    } else { progFramesNeeded=computeFramesNeeded(program[progStep]); }
-    if(progStepping){progRunning=false;progStepping=false;rcRun.textContent='▶ Test Run';rcRun.classList.remove('running');rcStep.disabled=false;updateProgStatus(`PAUSED @ step ${progStep}`);}
+    stepPastCurrent();
+    progFrames=0; progTurnRotated=0;
+    const next=getCurrentBlock();
+    if(!next){ stopProgram(); return; }
+    activeBlockRef=next;
+    progFramesNeeded=framesFor(next);
+    if(progStepping){progRunning=false;progStepping=false;rcRun.textContent='▶ Test Run';rcRun.classList.remove('running');rcStep.disabled=false;updateProgStatus('PAUSED');}
     renderSequence();
   }
 }
@@ -1607,19 +1772,12 @@ function applyInstruction(item,dt){
     progTurnRotated+=step;
     if(item.type==='turnleft') robot.angle-=step; else robot.angle+=step;
     return;
+  } else if(item.type==='turnto'){
+    const total=Math.abs(item.turnAmt), dir=Math.sign(item.turnAmt)||1;
+    const remaining=total-progTurnRotated, step=Math.min(ROT*dt,Math.max(0,remaining));
+    progTurnRotated+=step; robot.angle+=dir*step;
+    return;
   } else if(item.type==='wait'){return;}
-  else if(item.type==='ifwall'){
-    if(activeCond&&activeCond.hit){
-      const remaining=90-progTurnRotated,step=Math.min(ROT*dt,Math.max(0,remaining));
-      progTurnRotated+=step; robot.angle+=step;
-    }
-    return;
-  } else if(item.type==='iftag'){
-    if(activeCond&&activeCond.seen){ return; }
-    const remaining=item.param-progTurnRotated,step=Math.min(ROT*dt,Math.max(0,remaining));
-    progTurnRotated+=step; robot.angle+=step;
-    return;
-  }
   if(puzzle.ramp){const r=puzzle.ramp;if(robot.x>r.x&&robot.x<r.x+r.w&&robot.y<=r.lineY&&vy>0)vy=0;}
   if(!collides(robot.x+vx,robot.y)) robot.x+=vx;
   if(!collides(robot.x,robot.y+vy)) robot.y+=vy;
