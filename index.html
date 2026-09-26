@@ -618,7 +618,7 @@ header { display:flex; align-items:center; justify-content:space-between; paddin
   </div>
   <div id="challenge-status">
     <span id="challenge-label">Puzzle 1</span>
-    <span id="timer-display">30</span>
+    <span id="timer-display">30s</span>
   </div>
   <button id="tut-help-btn">❓ How to Play</button>
 </header>
@@ -709,9 +709,9 @@ header { display:flex; align-items:center; justify-content:space-between; paddin
         <div class="prog-block pal-block block-turnleft"  data-btype="turnleft"  title="Turn left">↺<div class="pb-label">Left</div></div>
         <div class="prog-block pal-block block-turnright" data-btype="turnright" title="Turn right">↻<div class="pb-label">Right</div></div>
         <div class="prog-block pal-block block-wait"      data-btype="wait"      title="Wait">⏸<div class="pb-label">Wait</div></div>
-        <div class="prog-block pal-block block-repeat"    data-btype="repeat"    title="Drag blocks inside this bracket to repeat them N times">🔁<div class="pb-label">Repeat</div></div>
-        <div class="prog-block pal-block block-ifwall"    data-btype="ifwall"    title="If an obstacle is close, run what's dragged inside (needs Proximity sensor)">📏<div class="pb-label">If Wall</div></div>
-        <div class="prog-block pal-block block-iftag"     data-btype="iftag"     title="If the tag is visible, turn to face it (± offset) then run what's inside (needs Vision sensor)">👁<div class="pb-label">If Tag</div></div>
+        <div class="prog-block pal-block block-repeat"    data-btype="repeat"    title="Repeat the blocks inside N times; 0 means zero repetitions">🔁<div class="pb-label">Repeat</div></div>
+        <div class="prog-block pal-block block-ifwall"    data-btype="ifwall"    title="If a wall is detected ahead, turn relative to it and run what's inside (needs Proximity sensor)">📏<div class="pb-label">If Wall</div></div>
+        <div class="prog-block pal-block block-iftag"     data-btype="iftag"     title="If a tag is visible, turn relative to it (0° toward, 180° away) then run what's inside (needs Vision sensor)">👁<div class="pb-label">If Tag</div></div>
       </div>
       <div id="sequence-wrap">
         <div id="sequence-empty">← Drag blocks here to build your program</div>
@@ -897,8 +897,8 @@ const PUZZLES = {
     ],
     tags:[{id:0,x:320,y:80,size:28,label:'AT#0'},{id:1,x:540,y:300,size:28,label:'AT#1'}],
     challenges:[
-      {tagId:0,timeLimit:60,name:'Level 0a — Straight Ahead',hint:"🎯 Goal: reach AT#0, straight ahead of you.\n\nAdd a Move block and increase its pixel value until the robot travels far enough. Hit ▶ Run when ready!"},
-      {tagId:1,timeLimit:60,name:'Level 0b — Turn and Go',hint:"🎯 Goal: reach AT#1 — it's directly to your right.\n\nAdd a Turn Right block, then a Move block after it, so the robot turns first and then drives forward into the tag."},
+      {tagId:0,timeLimit:60,instructionLimit:1,name:'Level 0a — Straight Ahead',hint:"🎯 Goal: reach AT#0, straight ahead of you.\n\nAdd a Move block and increase its pixel value until the robot travels far enough. Hit ▶ Run when ready!"},
+      {tagId:1,timeLimit:60,instructionLimit:2,name:'Level 0b — Turn and Go',hint:"🎯 Goal: reach AT#1 — it's directly to your right.\n\nAdd a Turn Right block, then a Move block after it, so the robot turns first and then drives forward into the tag."},
     ],
   },
   p1:{
@@ -916,8 +916,8 @@ const PUZZLES = {
     tags:[{id:0,x:80,y:80,size:28,label:'AT#0'},{id:1,x:560,y:340,size:28,label:'AT#1'},
           {id:2,x:560,y:60,size:28,label:'AT#2'},{id:3,x:80,y:340,size:28,label:'AT#3'}],
     challenges:[
-      {tagId:1,timeLimit:35,name:'Level 1a',hint:"🎯 Goal: reach AT#1, down and to the right, past the corner walls.\n\nTry increasing the Move block's pixel value so you travel far enough, and use a Turn Right block to angle toward it. Watch out for the wall in the corner!"},
-      {tagId:2,timeLimit:30,name:'Level 1b',hint:"🎯 Goal: reach AT#2, up and to the right this time.\n\nYou'll need a Turn block pointing the other way before moving forward. Only 4 credits this level — pick your sensor wisely!"},
+      {tagId:1,timeLimit:35,instructionLimit:3,name:'Level 1a',hint:"🎯 Goal: reach AT#1, down and to the right, past the corner walls.\n\nTry increasing the Move block's pixel value so you travel far enough, and use a Turn Right block to angle toward it. Watch out for the wall in the corner!"},
+      {tagId:2,timeLimit:30,instructionLimit:3,name:'Level 1b',hint:"🎯 Goal: reach AT#2, up and to the right this time.\n\nYou'll need a Turn block pointing the other way before moving forward. Only 4 credits this level — pick your sensor wisely!"},
     ],
   },
   p2:{
@@ -937,8 +937,8 @@ const PUZZLES = {
     tags:[{id:0,x:100,y:200,size:28,label:'AT#0'},{id:1,x:540,y:200,size:28,label:'AT#1'},
           {id:2,x:315,y:310,size:28,label:'AT#2'},{id:3,x:315,y:60,size:28,label:'AT#3'}],
     challenges:[
-      {tagId:2,timeLimit:35,name:'Level 2a',hint:"🎯 Goal: reach AT#2, almost straight down from the start.\n\nThere's an inner wall in the middle of the arena — you may need to go around it. Remember: only 3 credits total this level!"},
-      {tagId:1,timeLimit:28,name:'Level 2b',hint:"🎯 Goal: reach AT#1, straight to the right.\n\nVision (3cr) and Proximity (2cr) can't both fit in your budget — think about which single sensor gets the job done."},
+      {tagId:2,timeLimit:35,instructionLimit:4,name:'Level 2a',hint:"🎯 Goal: reach AT#2, almost straight down from the start.\n\nThere's an inner wall in the middle of the arena — you may need to go around it. Remember: only 3 credits total this level!"},
+      {tagId:1,timeLimit:28,instructionLimit:3,name:'Level 2b',hint:"🎯 Goal: reach AT#1, straight to the right.\n\nVision (3cr) and Proximity (2cr) can't both fit in your budget — think about which single sensor gets the job done."},
     ],
   },
   p3:{
@@ -959,8 +959,8 @@ const PUZZLES = {
     tags:[{id:0,x:140,y:330,size:28,label:'AT#0'},{id:1,x:500,y:80,size:28,label:'AT#1'},
           {id:2,x:310,y:340,size:28,label:'AT#2'},{id:3,x:520,y:310,size:28,label:'AT#3'}],
     challenges:[
-      {tagId:0,timeLimit:40,name:'Level 3a',hint:"🎯 Goal: reach AT#0, down and to the left — through a dark zone.\n\nVision loses range in the dark. If your camera can't see far enough, a Proximity sensor still works fine in the dark to help you avoid walls."},
-      {tagId:3,timeLimit:35,name:'Level 3b',hint:"🎯 Goal: reach AT#3, down and to the right.\n\nPlan a path around the dark zones and inner walls — Proximity (IR) keeps working even where Vision goes dim."},
+      {tagId:0,timeLimit:40,instructionLimit:5,name:'Level 3a',hint:"🎯 Goal: reach AT#0, down and to the left — through a dark zone.\n\nVision loses range in the dark. If your camera can't see far enough, a Proximity sensor still works fine in the dark to help you avoid walls."},
+      {tagId:3,timeLimit:35,instructionLimit:5,name:'Level 3b',hint:"🎯 Goal: reach AT#3, down and to the right.\n\nPlan a path around the dark zones and inner walls — Proximity (IR) keeps working even where Vision goes dim."},
     ],
   },
   p4:{
@@ -982,9 +982,9 @@ const PUZZLES = {
           {id:2,x:100,y:60,size:28,label:'AT#2'},{id:3,x:550,y:60,size:28,label:'AT#3'},
           {id:4,x:320,y:190,size:28,label:'AT#4'}],
     challenges:[
-      {tagId:0,timeLimit:40,name:'Gauntlet 1',hint:"🎯 Goal: reach AT#0, down and to the left, through a dark zone and a tight corridor.\n\nYou've got 5 credits this level — combining two sensors is possible if you plan your slots carefully."},
-      {tagId:3,timeLimit:35,name:'Gauntlet 2',hint:"🎯 Goal: reach AT#3, up and to the right, past the middle corridor walls.\n\nRe-use what worked last stage — same budget rules, new route."},
-      {tagId:4,timeLimit:30,name:'Final',hint:"🎯 Final goal: AT#4 sits right near the center — very close to your start position!\n\nA short, careful Move should be all you need. Watch your timing."},
+      {tagId:0,timeLimit:40,instructionLimit:6,name:'Gauntlet 1',hint:"🎯 Goal: reach AT#0, down and to the left, through a dark zone and a tight corridor.\n\nYou've got 5 credits this level — combining two sensors is possible if you plan your slots carefully."},
+      {tagId:3,timeLimit:35,instructionLimit:6,name:'Gauntlet 2',hint:"🎯 Goal: reach AT#3, up and to the right, past the middle corridor walls.\n\nRe-use what worked last stage — same budget rules, new route."},
+      {tagId:4,timeLimit:30,instructionLimit:3,name:'Final',hint:"🎯 Final goal: AT#4 sits right near the center — very close to your start position!\n\nA short, careful Move should be all you need. Watch your timing."},
     ],
   },
   p5:{
@@ -1007,9 +1007,9 @@ const PUZZLES = {
       {id:3, x:310, y:175, size:28, label:'AT#3'},
     ],
     challenges:[
-      {tagId:0, timeLimit:25, name:'Part 1 — Learn the Bottom',hint:"🎯 Goal: reach AT#0, straight to your right along the bottom floor.\n\nNo ramp needed yet — just get comfortable driving in the dark bottom zone first."},
-      {tagId:1, timeLimit:55, name:'Part 2 — Cross the Ramp',hint:"🎯 Goal: reach AT#1, up and to the left — but the only way up is the one-way ramp on the right.\n\nHead right to the ramp first, ride it up, then travel left across the top. Remember: once you're up, you can't come back down!"},
-      {tagId:3, timeLimit:45, name:'Part 3 — Upper Zone',hint:"🎯 Goal: reach AT#3, up on the platform in the upper zone.\n\nCross the ramp again, then navigate carefully through the upper zone to the middle platform."},
+      {tagId:0, timeLimit:25, instructionLimit:2, name:'Part 1 — Learn the Bottom',hint:"🎯 Goal: reach AT#0, straight to your right along the bottom floor.\n\nNo ramp needed yet — just get comfortable driving in the dark bottom zone first."},
+      {tagId:1, timeLimit:55, instructionLimit:7, name:'Part 2 — Cross the Ramp',hint:"🎯 Goal: reach AT#1, up and to the left — but the only way up is the one-way ramp on the right.\n\nHead right to the ramp first, ride it up, then travel left across the top. Remember: once you're up, you can't come back down!"},
+      {tagId:3, timeLimit:45, instructionLimit:7, name:'Part 3 — Upper Zone',hint:"🎯 Goal: reach AT#3, up on the platform in the upper zone.\n\nCross the ramp again, then navigate carefully through the upper zone to the middle platform."},
     ],
   },
 };
@@ -1020,9 +1020,9 @@ const BLOCK_DEFS = {
   turnleft:  { icon:'↺', label:'Left',   cls:'block-turnleft',  defaultParam:90,  unit:'°',   min:1,    max:999, description:'Turn left N degrees' },
   turnright: { icon:'↻', label:'Right',  cls:'block-turnright', defaultParam:90,  unit:'°',   min:1,    max:999, description:'Turn right N degrees' },
   wait:      { icon:'⏸', label:'Wait',   cls:'block-wait',      defaultParam:1,   unit:'s',   min:1,    max:999, description:'Wait N seconds' },
-  repeat:    { icon:'🔁', label:'Repeat', cls:'block-repeat',    defaultParam:2,   unit:'×',   min:1,    max:999, container:true, description:'Runs the blocks dragged inside this bracket N times.' },
-  ifwall:    { icon:'📏', label:'If Wall', cls:'block-ifwall',   defaultParam:80,  unit:'px',  min:1,    max:999, container:true, description:'Needs Proximity: if an obstacle is within N px ahead, runs the blocks inside this bracket once. Otherwise skips them.' },
-  iftag:     { icon:'👁', label:'If Tag',  cls:'block-iftag',    defaultParam:0,   unit:'Δ°',  min:-180, max:180, container:true, description:'Needs Vision: if the target tag is visible, turns to face it (0°) or to an offset angle (e.g. 90° = off to one side), then runs the blocks inside once. If not visible, skips them.' },
+  repeat:    { icon:'🔁', label:'Repeat', cls:'block-repeat',    defaultParam:2,   unit:'×',   min:0,    max:999, container:true, description:'Runs the blocks inside N times. 0 means zero repetitions, not unlimited.' },
+  ifwall:    { icon:'📏', label:'If Wall', cls:'block-ifwall',   defaultParam:0,   unit:'Δ°',  min:-180, max:180, container:true, description:'Needs Proximity: if a wall is detected ahead, turns relative to that detected wall (0° = toward it, 180° = away), then runs the blocks inside once.' },
+  iftag:     { icon:'👁', label:'If Tag',  cls:'block-iftag',   defaultParam:0,   unit:'Δ°',  min:-180, max:180, container:true, description:'Needs Vision: if the target tag is visible, turns relative to it (0° = toward it, 180° = away), then runs the blocks inside once.' },
 };
 
 // ═══════════════════════════════════════════════════
@@ -1062,6 +1062,31 @@ let cachedTags  = [];
 let pendingScore = null;
 let lbActiveTab  = 'all';
 let levelStartTime = null;
+const touchedTagSet = new Set();
+
+function challengeTagIds(c){
+  if(Array.isArray(c.tagIds) && c.tagIds.length) return c.tagIds;
+  return c.tagId===undefined ? [] : [c.tagId];
+}
+function currentChallenge(){
+  return puzzle.challenges[Math.min(challengeIndex,puzzle.challenges.length-1)];
+}
+function currentInstructionLimit(){
+  const c=currentChallenge();
+  return Number.isFinite(c.instructionLimit) ? c.instructionLimit : Infinity;
+}
+function countInstructions(list=program){
+  return list.reduce((count,node)=>count+1+(node.children?countInstructions(node.children):0),0);
+}
+function touchRequiredTags(){
+  if(!challengeActive) return false;
+  const c=currentChallenge();
+  for(const id of challengeTagIds(c)){
+    const tag=puzzle.tags.find(t=>t.id===id);
+    if(tag && Math.hypot(robot.x-tag.x,robot.y-tag.y)<34) touchedTagSet.add(id);
+  }
+  return challengeTagIds(c).every(id=>touchedTagSet.has(id));
+}
 
 // ═══════════════════════════════════════════════════
 // ELEMENTS
@@ -1245,7 +1270,8 @@ function updateObjectiveBadge(){
   const c=puzzle.challenges[ci];
   const stageTxt=puzzle.challenges.length>1?`${puzzle.name} · ${c.name}`:puzzle.name;
   let objTxt=(c.hint||'').replace(/^🎯 Goal: /,'').split('\n')[0].trim();
-  if(!objTxt) objTxt=`Find AT#${c.tagId} within ${c.timeLimit}s`;
+  if(!objTxt) objTxt=`Touch ${challengeTagIds(c).map(id=>`AT#${id}`).join(', ')} within ${c.timeLimit}s`;
+  if(Number.isFinite(c.instructionLimit)) objTxt += ` · ≤${c.instructionLimit} instructions`;
   document.getElementById('objective-badge-title').textContent=`🎯 ${stageTxt}`;
   document.getElementById('objective-badge-text').textContent=objTxt;
 }
@@ -1350,11 +1376,18 @@ document.getElementById('reset-design-btn').addEventListener('click',()=>{clearS
 function startChallenge(){
   if(!placedSensors.length){showOverlay('⚠️ No Sensors!','Place at least one sensor in Design Mode.',2200);return;}
   if(!program.length){showOverlay('⚠️ No Program!','Add blocks to the Code Panel before starting a puzzle.',2400);return;}
+  const instructionLimit=currentInstructionLimit();
+  const instructionCount=countInstructions();
+  if(instructionCount>instructionLimit){
+    showOverlay('⚠️ Too Many Instructions',`This challenge allows ${instructionLimit} instructions. Your program uses ${instructionCount}.`,2600);
+    return;
+  }
   challengeActive=true;
+  touchedTagSet.clear();
   const c=puzzle.challenges[challengeIndex];
   challengeTimeLeft=c.timeLimit;
   challengeLabel.textContent=c.name;
-  timerDisplay.textContent=challengeTimeLeft;
+  timerDisplay.textContent=`${challengeTimeLeft}s`;
   timerDisplay.classList.remove('urgent');
   challengeStatus.classList.add('active');
   challengeBtn.textContent='⛔ Stop';
@@ -1363,7 +1396,7 @@ function startChallenge(){
   clearInterval(challengeTimerRef);
   challengeTimerRef=setInterval(()=>{
     challengeTimeLeft--;
-    timerDisplay.textContent=challengeTimeLeft;
+    timerDisplay.textContent=`${challengeTimeLeft}s`;
     if(challengeTimeLeft<=8) timerDisplay.classList.add('urgent');
     updateChallengeCard();
     if(challengeTimeLeft<=0){stopChallenge();showOverlay("⏱ Time's Up!","Didn't reach the goal tag. Try a different sensor or program!",0);}
@@ -1392,7 +1425,7 @@ function winChallenge(){
     showOverlay('🏆 Level Complete!',`Finished ${stageWord.replace('all ','')} in ${fmtTotalTime(totalTime)}!\n\nOpening the leaderboard so you can save your score…`,0);
     setTimeout(()=>{ hideOverlay(); lbOpen(); },1400);
   } else {
-    showOverlay(`✅ ${c.name} Done!`,`Tag found with ${challengeTimeLeft}s to spare!\n\nNext up: ${puzzle.challenges[challengeIndex].name}`,2200);
+    showOverlay(`✅ ${c.name} Done!`,`All required tags touched with ${challengeTimeLeft}s to spare!\n\nNext up: ${puzzle.challenges[challengeIndex].name}`,2200);
     setTimeout(()=>{ resetSim(); updateChallengeCard(); showGoalBubble(currentChallengeHint()); },2200);
   }
   updateChallengeCard();
@@ -1401,17 +1434,20 @@ function updateChallengeCard(){
   const card=document.getElementById('r-challenge');
   updateObjectiveBadge();
   if(!card) return;
-  const ci=Math.min(challengeIndex,puzzle.challenges.length-1);
-  const c=puzzle.challenges[ci];
+  const c=currentChallenge();
+  const targets=challengeTagIds(c).map(id=>`AT#${id}`).join(', ');
+  const instructionLimit=currentInstructionLimit();
+  const instructionText=Number.isFinite(instructionLimit)?`Instructions: <strong>${countInstructions()} / ${instructionLimit}</strong>`:`Instructions: <strong>${countInstructions()}</strong>`;
   const hasPending=!!pendingScore;
   const hint=document.getElementById('key-hint-note');
   if(hint) hint.textContent=challengeActive?'⛔ Arrow keys locked — program is running':'or use the Code Panel below';
   if(!challengeActive){
     card.className='reading-card constraint';
-    card.innerHTML=`<div class="r-label" style="color:#15803d">🎯 Puzzle Goal${hasPending?'<span class="lb-pending-badge">Score ready!</span>':''}</div><div style="font-size:11px;color:var(--dim);margin-top:4px;line-height:1.5">Find <strong>AT#${c.tagId}</strong> in <strong>${c.timeLimit}s</strong><br>Budget: ${placedSensors.reduce((a,s)=>a+s.cost,0)} / ${puzzle.creditLimit}credits used<br><em style="font-size:10px;opacity:.8">${puzzle.constraint}</em></div>`;
+    card.innerHTML=`<div class="r-label" style="color:#15803d">🎯 Puzzle Goal${hasPending?'<span class="lb-pending-badge">Score ready!</span>':''}</div><div style="font-size:11px;color:var(--dim);margin-top:4px;line-height:1.5">Touch <strong>${targets}</strong> in <strong>${c.timeLimit}s</strong><br>${instructionText}<br>Budget: ${placedSensors.reduce((a,s)=>a+s.cost,0)} / ${puzzle.creditLimit}credits used<br><em style="font-size:10px;opacity:.8">${puzzle.constraint}</em></div>`;
   } else {
+    const touched=challengeTagIds(c).filter(id=>touchedTagSet.has(id)).length;
     card.className='reading-card constraint active-c';
-    card.innerHTML=`<div class="r-label" style="color:#1d4ed8">🎯 ${c.name}</div><div style="font-size:11px;color:var(--dim);margin-top:4px;line-height:1.5">Find <strong>AT#${c.tagId}</strong><br>Time: <strong style="font-family:'Courier New';color:${challengeTimeLeft<=8?'#dc2626':'#1d4ed8'}">${challengeTimeLeft}s</strong><br><span style="font-size:10px;opacity:.7">⌨ Keys locked · auto-program running</span></div>`;
+    card.innerHTML=`<div class="r-label" style="color:#1d4ed8">🎯 ${c.name}</div><div style="font-size:11px;color:var(--dim);margin-top:4px;line-height:1.5">Touch <strong>${targets}</strong> <span style="font-size:10px">(${touched}/${challengeTagIds(c).length})</span><br>Time: <strong style="font-family:'Courier New';color:${challengeTimeLeft<=8?'#dc2626':'#1d4ed8'}">${challengeTimeLeft}s</strong><br>${instructionText}<br><span style="font-size:10px;opacity:.7">⌨ Keys locked · auto-program running</span></div>`;
   }
 }
 challengeBtn.addEventListener('click',()=>{ if(challengeActive) stopChallenge(); else startChallenge(); });
@@ -1453,7 +1489,7 @@ window.addEventListener('keydown',e=>{
 window.addEventListener('keyup',e=>keys.delete(e.key));
 document.getElementById('reset-sim-btn').addEventListener('click',()=>{resetSim();hideOverlay();stopChallenge();stopProgram();});
 
-function resetSim(){ robot.x=puzzle.startX||320; robot.y=puzzle.startY||200; robot.angle=0; trail.length=0; speed=0; keys.clear(); cachedVis=[]; cachedTags=[]; }
+function resetSim(){ robot.x=puzzle.startX||320; robot.y=puzzle.startY||200; robot.angle=0; trail.length=0; speed=0; keys.clear(); cachedVis=[]; cachedTags=[]; if(!challengeActive) touchedTagSet.clear(); }
 function collides(x,y){ if(x-ROBOT_R<1||x+ROBOT_R>CANVAS_W-1||y-ROBOT_R<1||y+ROBOT_R>CANVAS_H-1) return true; for(const o of puzzle.obs){const nx=Math.max(o.x,Math.min(o.x+o.w,x)),ny=Math.max(o.y,Math.min(o.y+o.h,y));if((x-nx)**2+(y-ny)**2<ROBOT_R*ROBOT_R) return true;} return false; }
 function castRay(x0,y0,angleDeg,maxDist=260){ const dx=Math.sin(angleDeg*Math.PI/180),dy=-Math.cos(angleDeg*Math.PI/180); for(let d=0;d<=maxDist;d+=2){const x=x0+dx*d,y=y0+dy*d; if(x<0||x>CANVAS_W||y<0||y>CANVAS_H) return d; for(const o of puzzle.obs) if(x>=o.x&&x<=o.x+o.w&&y>=o.y&&y<=o.y+o.h) return d;} return maxDist; }
 function inDark(x,y){ return puzzle.darkZones.some(dz=>x>=dz.x&&x<=dz.x+dz.w&&y>=dz.y&&y<=dz.y+dz.h); }
@@ -1582,6 +1618,13 @@ document.addEventListener('mouseup',e=>{
       newItem=removedMeta.item;
     } else {
       const def=BLOCK_DEFS[codeDrag.btype];
+      const instructionLimit=currentInstructionLimit();
+      if(countInstructions()+1>instructionLimit){
+        codeDrag=null;
+        renderSequence();
+        showOverlay('⚠️ Instruction Limit',`This challenge allows ${instructionLimit} instructions. Remove a block before adding another.`,2200);
+        return;
+      }
       newItem={id:nextBlockId(), type:codeDrag.btype, param:codeDrag.param};
       if(def.container) newItem.children=[];
     }
@@ -1661,16 +1704,23 @@ function enterContainer(node){
   if(node.type==='ifwall'){
     const hasProx=placedSensors.some(s=>s.type==='proximity');
     const dist=hasProx?castRay(robot.x,robot.y,robot.angle):Infinity;
-    return {count:(hasProx&&dist<=node.param)?1:0};
+    if(!hasProx || dist>80) return {count:0};
+    // The proximity beam detects the wall directly ahead.
+    // 0° = toward the detected wall; 180° = away from it.
+    const wallAngle=robot.angle;
+    const target=(wallAngle+(node.param||0)+360)%360;
+    return {count:1, turnAmt:shortestDelta(robot.angle,target)};
   }
   if(node.type==='iftag'){
     const hasVis=placedSensors.some(s=>s.type==='vision');
-    const ci=Math.min(challengeIndex,puzzle.challenges.length-1);
-    const goalId=puzzle.challenges[ci].tagId;
-    const tag=hasVis?visibleTags().find(t=>t.id===goalId):null;
+    const c=currentChallenge();
+    const goalIds=challengeTagIds(c);
+    const visible=hasVis?visibleTags():[];
+    const tag=visible.find(t=>goalIds.includes(t.id));
     if(!tag) return {count:0};
     const dx=tag.x-robot.x, dy=tag.y-robot.y;
     const angleToTag=(Math.atan2(dx,-dy)*180/Math.PI+360)%360;
+    // 0° = directly toward the detected tag; 180° = directly away.
     const target=(angleToTag+(node.param||0)+360)%360;
     return {count:1, turnAmt:shortestDelta(robot.angle,target)};
   }
@@ -1848,16 +1898,12 @@ function update(dt){
   }
   cachedVis=hasVision?visibleObs():[];
   {
-    const ci=Math.min(challengeIndex,puzzle.challenges.length-1);
-    const goalTagId=puzzle.challenges[ci].tagId;
-    cachedTags=hasVision?visibleTags().filter(t=>t.id===goalTagId):[];
+    const c=currentChallenge();
+    const goalIds=challengeTagIds(c);
+    cachedTags=hasVision?visibleTags().filter(t=>goalIds.includes(t.id)):[];
   }
-  if(challengeActive){
-    const ci=Math.min(challengeIndex,puzzle.challenges.length-1);
-    const gt=puzzle.tags.find(t=>t.id===puzzle.challenges[ci].tagId);
-    if(gt&&Math.hypot(robot.x-gt.x,robot.y-gt.y)<34) winChallenge();
-    
-  }
+  if(challengeActive && touchRequiredTags()) winChallenge();
+
 }
 
 // ═══════════════════════════════════════════════════
@@ -1875,7 +1921,7 @@ function draw(){
   if(puzzle.ramp){const r=puzzle.ramp;ctx.fillStyle='#fef3c7';ctx.fillRect(r.x,r.y-2,r.w,14);ctx.save();ctx.beginPath();ctx.rect(r.x,r.y-2,r.w,14);ctx.clip();ctx.strokeStyle='rgba(217,119,6,0.45)';ctx.lineWidth=2;for(let i=-14;i<r.w+14;i+=10){ctx.beginPath();ctx.moveTo(r.x+i,r.y-2);ctx.lineTo(r.x+i+14,r.y+12);ctx.stroke();}ctx.restore();ctx.strokeStyle='#d97706';ctx.lineWidth=1.5;ctx.strokeRect(r.x,r.y-2,r.w,14);ctx.fillStyle='#92400e';ctx.font='bold 11px Segoe UI';ctx.textAlign='center';ctx.fillText('▲ ▲ ▲',r.x+r.w/2,r.y+7);ctx.fillStyle='#92400e';ctx.font='bold 9px Courier New';ctx.fillText('ONE WAY',r.x+r.w/2,r.y-6);}
   const hasMotion=placedSensors.some(s=>s.type==='motion'),hasProx=placedSensors.some(s=>s.type==='proximity'),hasVision=placedSensors.some(s=>s.type==='vision');
   if(hasMotion&&trail.length>1){for(let i=1;i<trail.length;i++){const a=(i/trail.length)*0.6;ctx.strokeStyle=`rgba(217,119,6,${a})`;ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(trail[i-1].x,trail[i-1].y);ctx.lineTo(trail[i].x,trail[i].y);ctx.stroke();}}
-  if(hasVision){const fovRad=FOV_DEG*Math.PI/180,fwdAngle=(robot.angle-90)*Math.PI/180,range=camRangeAt(robot.x,robot.y);ctx.save();ctx.globalAlpha=0.12;ctx.fillStyle='#9333ea';ctx.beginPath();ctx.moveTo(robot.x,robot.y);ctx.arc(robot.x,robot.y,range,fwdAngle-fovRad,fwdAngle+fovRad);ctx.closePath();ctx.fill();ctx.globalAlpha=0.28;ctx.strokeStyle='#9333ea';ctx.lineWidth=1;ctx.stroke();ctx.globalAlpha=0.15;ctx.fillStyle='#9333ea';for(const o of cachedVis)ctx.fillRect(o.x,o.y,o.w,o.h);ctx.restore();const ci=Math.min(challengeIndex,puzzle.challenges.length-1);for(const t of cachedTags)drawAprilTag(t,challengeActive&&t.id===puzzle.challenges[ci].tagId);}
+  if(hasVision){const fovRad=FOV_DEG*Math.PI/180,fwdAngle=(robot.angle-90)*Math.PI/180,range=camRangeAt(robot.x,robot.y);ctx.save();ctx.globalAlpha=0.12;ctx.fillStyle='#9333ea';ctx.beginPath();ctx.moveTo(robot.x,robot.y);ctx.arc(robot.x,robot.y,range,fwdAngle-fovRad,fwdAngle+fovRad);ctx.closePath();ctx.fill();ctx.globalAlpha=0.28;ctx.strokeStyle='#9333ea';ctx.lineWidth=1;ctx.stroke();ctx.globalAlpha=0.15;ctx.fillStyle='#9333ea';for(const o of cachedVis)ctx.fillRect(o.x,o.y,o.w,o.h);ctx.restore();const c=currentChallenge(),goalIds=challengeTagIds(c);for(const t of cachedTags)drawAprilTag(t,challengeActive&&goalIds.includes(t.id)&&!touchedTagSet.has(t.id));}
   let proxDist=260;
   if(hasProx){proxDist=castRay(robot.x,robot.y,robot.angle);const endX=robot.x+Math.sin(robot.angle*Math.PI/180)*proxDist,endY=robot.y-Math.cos(robot.angle*Math.PI/180)*proxDist,col=proxDist<60?'#dc2626':proxDist<120?'#d97706':'#219ebc';ctx.save();ctx.strokeStyle=col;ctx.lineWidth=1.5;ctx.setLineDash([6,5]);ctx.globalAlpha=0.8;ctx.beginPath();ctx.moveTo(robot.x,robot.y);ctx.lineTo(endX,endY);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;ctx.fillStyle=col;ctx.beginPath();ctx.arc(endX,endY,4,0,Math.PI*2);ctx.fill();ctx.restore();}
   const hw=24,hh=28;ctx.save();ctx.translate(robot.x,robot.y);ctx.rotate(robot.angle*Math.PI/180);
@@ -1978,10 +2024,10 @@ const TUT_STEPS = [
   {
     id: 'drag-sensor',
     icon: '🖱️',
-    title: 'Drag a Sensor onto the Robot',
-    body: `Now try it! <strong>Drag any sensor card</strong> from the list and drop it onto the robot body in the centre.<br><br>A coloured dot will appear where you placed it.
-    <div class="tut-action"><span class="act-icon">👆</span><span>Drag a sensor card → drop it on the robot body</span></div>`,
-    target: '.sensor-card.motion',
+    title: 'Drag Vision & Camera onto the Robot',
+    body: `Now try it! <strong>Drag the Vision & Camera sensor</strong> from the Sensor Library and drop it onto the robot body in the centre.<br><br>A coloured dot will appear where you placed it. This will help you see the hidden tags in the arena during simulation.
+    <div class="tut-action"><span class="act-icon">👆</span><span>Drag Vision & Camera → drop it on the robot body</span></div>`,
+    target: '.sensor-card.vision',
     arrow: 'right',
     side: 'left',
     waitFor: 'sensorPlaced',
@@ -2283,7 +2329,7 @@ function tutHandleAction(actionId, payload) {
   tutCompleted.add(actionId);
 
   const step = TUT_STEPS[tutStepIndex];
-  if (step.waitFor === actionId) {
+  if (step.waitFor === actionId && (actionId !== 'sensorPlaced' || payload === 'vision')) {
     // Flash confirmation, then advance
     tutTtNext.textContent = '✓ Done! Advancing…';
     tutTtNext.className   = 'tut-step-done';
